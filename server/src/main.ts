@@ -4,36 +4,13 @@ import { loadConfig, type Config } from "./config";
 import { createApp } from "./http/app";
 import { backgroundRunner, createInternalApp } from "./http/internalApp";
 import type { ConnectDeps } from "./http/routes/connect";
-import type { RunDeps } from "./pipeline/runMailbox";
-import type { SpamCheck } from "./ports";
-import { rspamdCheck } from "./spam/rspamdCheck";
-import { createStore, migrate, postgresDb, type Db, type Store } from "./store";
-import { mailAuthFromConfig } from "./wiring/mailAuthFromConfig";
-import { mailboxFromConfig } from "./wiring/mailboxFromConfig";
+import { createStore, migrate, postgresDb, type Store } from "./store";
+import { buildRunDeps } from "./wiring/buildRunDeps";
+import { localEmbedder } from "./search/localEmbedder";
+import { vectorSearch } from "./search/vectorSearch";
 import { tokenStoreAdapter } from "./wiring/tokenStoreAdapter";
 
 const STATIC_DIR = process.env.STATIC_DIR ?? "/app/public";
-const noSpamEngine: SpamCheck = { check: async () => undefined };
-
-// Mirrors buildRunDeps in worker.ts, which can't be imported because it runs on load.
-function runDeps(config: Config, db: Db, store: Store): RunDeps {
-  const auth = mailAuthFromConfig(config, tokenStoreAdapter(store.tokens));
-  return {
-    lock: store.runLock,
-    mailbox: mailboxFromConfig(config, auth),
-    cursor: store.cursor,
-    outcomes: store.outcomes,
-    rules: store.rules,
-    senders: store.senders,
-    spamCheck: config.RSPAMD_URL ? rspamdCheck(config.RSPAMD_URL) : noSpamEngine,
-    runs: store.runs,
-    clock: { now: () => new Date() },
-    dryRun: config.DRY_RUN,
-    prepare: async () => {
-      await migrate(db);
-    },
-  };
-}
 
 function connectDeps(config: Config, store: Store): ConnectDeps | undefined {
   const { PUBLIC_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY } = config;
@@ -49,6 +26,11 @@ function connectDeps(config: Config, store: Store): ConnectDeps | undefined {
   };
 }
 
+function askDeps(store: Store) {
+  const { facts, messages, decisions, embeddings } = store;
+  return { facts, messages, decisions, search: vectorSearch(embeddings, localEmbedder()) };
+}
+
 const closeServer = (server: ServerType) =>
   new Promise<void>((done) => server.close(() => done()));
 
@@ -61,7 +43,7 @@ async function main(): Promise<void> {
   if (!migrated) console.log("server: a run holds the lock; it applies migrations");
 
   const runner = backgroundRunner(
-    () => runDeps(config, db, store),
+    () => buildRunDeps(config, db, store),
     (result) => result && console.log(`server: run fetched=${result.run.fetched} aborted=${result.aborted}`),
   );
   const app = createApp({
@@ -69,6 +51,7 @@ async function main(): Promise<void> {
     runs: store.runs,
     connect: connectDeps(config, store),
     staticDir: STATIC_DIR,
+    api: { db, ask: askDeps(store) },
   });
   const internal = createInternalApp({ token: config.INTERNAL_TOKEN, trigger: runner.trigger });
   const servers = [

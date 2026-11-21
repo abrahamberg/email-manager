@@ -7,6 +7,7 @@ import type {
   Classifier, Clock, Mailbox, MailboxCursor, OutcomeLog, RawMessage, RuleSource, RunLock, SenderHistory, SpamCheck,
 } from "../ports";
 import type { Rule } from "../rules/Rule";
+import { prepareLife, type LifeDeps, type LifeRun } from "./lifeDeps";
 import { processEmail } from "./processEmail";
 import { startAfter } from "./startPoint";
 
@@ -26,6 +27,9 @@ export interface RunDeps {
   clock: Clock;
   dryRun: boolean;
   classifier?: Classifier;
+  life?: LifeDeps;
+  /** AI spend so far in this run, stored on the run row so the daily budget sees it. */
+  aiCostUsd?: () => number;
   /** Runs inside the lock before any mail is read (migrations). */
   prepare?: () => Promise<void>;
 }
@@ -61,7 +65,7 @@ async function runLocked(deps: RunDeps): Promise<RunResult> {
   } finally {
     await deps.mailbox.close().catch(() => undefined);
   }
-  const run = toRun(started, deps.clock.now(), tally);
+  const run = toRun(started, deps.clock.now(), tally, deps.aiCostUsd?.() ?? 0);
   await deps.runs.save(run);
   return { run, aborted };
 }
@@ -71,10 +75,11 @@ async function processMailbox(deps: RunDeps, tally: Tally): Promise<void> {
   let after = startAfter(state, await deps.cursor.get());
   const rules = await deps.rules.activeRules();
   const recentHashes: bigint[] = [];
+  const life = deps.life && prepareLife(deps.life);
   for await (const raw of deps.mailbox.fetchSince(after)) {
     tally.fetched++;
     try {
-      await handleMessage(raw, rules, recentHashes, deps, tally);
+      await handleMessage(raw, { rules, recentHashes, life }, deps, tally);
     } catch (err) {
       tally.errors.push(`uid ${raw.uid}: ${errorText(err)}`);
     }
@@ -83,14 +88,20 @@ async function processMailbox(deps: RunDeps, tally: Tally): Promise<void> {
   }
 }
 
-async function handleMessage(raw: RawMessage, rules: Rule[], recentHashes: bigint[], deps: RunDeps, tally: Tally) {
+interface RunState {
+  rules: Rule[];
+  recentHashes: bigint[];
+  life: LifeRun | undefined;
+}
+
+async function handleMessage(raw: RawMessage, state: RunState, deps: RunDeps, tally: Tally) {
   const email = await parseEmail(raw.uid, raw.source);
   if (await deps.outcomes.seen(email.messageId)) return;
   const sender = await deps.senders.get(email.from.address);
-  const decision = await processEmail(email, raw.source, { ...deps, rules, sender, recentHashes });
+  const decision = await processEmail(email, raw.source, { ...deps, ...state, sender });
   if (decision.signal === "ai") tally.sentToAi++;
   else tally.handledByLogic++;
-  rememberHash(email, recentHashes);
+  rememberHash(email, state.recentHashes);
   if (email.from.address) await deps.senders.recordReceived(email.from.address);
 }
 
@@ -98,7 +109,7 @@ function rememberHash(email: Email, hashes: bigint[]): void {
   hashes.push(simhash(email.text));
 }
 
-function toRun(started: Date, ended: Date, t: Tally): Run {
+function toRun(started: Date, ended: Date, t: Tally, costUsd: number): Run {
   return {
     id: randomUUID(),
     startedAt: started.toISOString(),
@@ -107,7 +118,7 @@ function toRun(started: Date, ended: Date, t: Tally): Run {
     handledByLogic: t.handledByLogic,
     sentToAi: t.sentToAi,
     tokens: 0,
-    costUsd: 0,
+    costUsd,
     error: t.errors.length ? t.errors.join("; ").slice(0, 2000) : undefined,
   };
 }

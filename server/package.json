@@ -5,7 +5,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "esbuild src/main.ts src/worker.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist"
+    "build": "esbuild src/main.ts src/worker.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist --external:@huggingface/transformers"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

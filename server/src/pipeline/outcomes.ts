@@ -1,6 +1,6 @@
 import type { Outcome, Signal } from "@email-manager/shared";
 import type { Email } from "../mail/Email";
-import type { Clock, Mailbox, OutcomeLog } from "../ports";
+import type { Clock, Mailbox, OutcomeLog, Tier } from "../ports";
 import type { Action } from "../rules/Rule";
 
 export type MailAction =
@@ -14,6 +14,9 @@ export interface Decision {
   reason: string;
   confidence?: number;
   actions: MailAction[];
+  /** Set when triage or a stream decided: the report reads the tier and area. */
+  tier?: Tier;
+  areaId?: string;
 }
 
 export const DIGEST_LABEL = "Digest";
@@ -75,6 +78,8 @@ export async function applyDecision(decision: Decision, email: Email, deps: Appl
     signal: decision.signal,
     reason: decision.reason,
     confidence: decision.confidence,
+    ...(decision.tier ? { tier: decision.tier } : {}),
+    ...(decision.areaId ? { areaId: decision.areaId } : {}),
     dryRun: deps.dryRun,
     at: deps.clock.now().toISOString(),
   });

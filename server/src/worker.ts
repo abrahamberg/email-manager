@@ -1,41 +1,14 @@
-// Composition root for the scheduled run: the only file that picks concrete adapters for it.
-import { loadConfig, type Config } from "./config";
-import type { SpamCheck } from "./ports";
-import { runMailbox, type RunDeps } from "./pipeline/runMailbox";
-import { rspamdCheck } from "./spam/rspamdCheck";
-import { createStore, migrate, postgresDb, type Db } from "./store";
-import { mailAuthFromConfig } from "./wiring/mailAuthFromConfig";
-import { mailboxFromConfig } from "./wiring/mailboxFromConfig";
-import { tokenStoreAdapter } from "./wiring/tokenStoreAdapter";
+// Entry for the scheduled run (CronJob).
+import { loadConfig } from "./config";
+import { runMailbox } from "./pipeline/runMailbox";
+import { createStore, postgresDb } from "./store";
+import { buildRunDeps } from "./wiring/buildRunDeps";
 
-// Without Rspamd, isSpam still applies the DMARC check from headers.
-const noSpamEngine: SpamCheck = { check: async () => undefined };
-
-export function buildRunDeps(config: Config, db: Db): RunDeps {
-  const store = createStore(db);
-  const auth = mailAuthFromConfig(config, tokenStoreAdapter(store.tokens));
-  return {
-    lock: store.runLock,
-    mailbox: mailboxFromConfig(config, auth),
-    cursor: store.cursor,
-    outcomes: store.outcomes,
-    rules: store.rules,
-    senders: store.senders,
-    spamCheck: config.RSPAMD_URL ? rspamdCheck(config.RSPAMD_URL) : noSpamEngine,
-    runs: store.runs,
-    clock: { now: () => new Date() },
-    dryRun: config.DRY_RUN,
-    prepare: async () => {
-      await migrate(db);
-    },
-  };
-}
-
-export async function main(): Promise<number> {
+export async function runWorker(): Promise<number> {
   const config = loadConfig();
   const db = postgresDb(config.DATABASE_URL);
   try {
-    const result = await runMailbox(buildRunDeps(config, db));
+    const result = await runMailbox(buildRunDeps(config, db, createStore(db)));
     if (!result) {
       console.log("worker: another run holds the lock; nothing to do");
       return 0;
@@ -49,10 +22,14 @@ export async function main(): Promise<number> {
   }
 }
 
-main().then(
-  (code) => process.exit(code),
-  (err: unknown) => {
-    console.error(`worker: failed: ${err instanceof Error ? err.message : String(err)}`);
-    process.exit(1);
-  },
-);
+const isEntry = import.meta.url === `file://${process.argv[1]}` || /worker\.(js|mjs)$/.test(process.argv[1] ?? "");
+
+if (isEntry) {
+  runWorker().then(
+    (code) => process.exit(code),
+    (err: unknown) => {
+      console.error(`worker: failed: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    },
+  );
+}
