@@ -273,6 +273,6 @@ OAuth tokens, the pipeline, auth, feeds, AI safety and matter grouping.
 
 ## Progress
 
-- [x] T0 · [x] T1 · [x] T2 · [x] T3 · [x] T4 · [x] T5 · [x] T6 · [x] T7 · [ ] T8 · [ ] T9 · [ ] T9b · [x] T9c · [ ] T10 · [ ] T11 · [ ] T12
+- [x] T0 · [x] T1 · [x] T2 · [x] T3 · [x] T4 · [x] T5 · [x] T6 · [x] T7 · [x] T8 · [ ] T9 · [ ] T9b · [x] T9c · [ ] T10 · [ ] T11 · [ ] T12
 - [ ] T13 · [ ] T14 · [ ] T15 · [ ] T16 · [ ] T17 · [ ] T18 · [ ] T19 · [ ] T20 · [ ] T21
 - [ ] T22 · [ ] T23 · [ ] T24 · [ ] T25
