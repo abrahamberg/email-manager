@@ -11,12 +11,22 @@ Nobody wants to "do email". They want three things:
 3. **Be sure** that what was done on their behalf was right.
 
 A traditional client shows a list of messages and lets the user do the work.
-Here the system does the work and the user only does what the system cannot
-decide alone. So the unit of the interface is **a decision, not a message**.
+This is a **layer on top of email**, not a smarter inbox. The unit is **a thing
+in the user's life** ("Elsa's trip to Skansen", "Contoso renewal"), not a
+message. Many emails fold into one thing, and email only appears as the source
+behind it.
+
+Everything that arrives lands in one of three tiers:
+
+| Tier | What it is | How it shows |
+|---|---|---|
+| **Don't miss** | Few. Costs something if ignored: a deadline, money, someone waiting, a decision only the user can make | Top of Today, one card at a time, chased until closed |
+| **Worth knowing** | Reporting back: what changed, what the assistant did | A few lines on Today, nothing to do |
+| **Not worth your time** | Most mail | One line with counts; "Skipped mail" if curious |
 
 ## 2. Principles
 
-1. **Decisions, not messages.** Home shows only things that need the user,
+1. **Things, not messages.** Home shows only things that need the user,
    each one phrased as a question with an answer already prepared.
 2. **One recommended action, pre-selected.** The default path is one key or
    one tap (`Enter`). Everything else is secondary.
@@ -66,33 +76,28 @@ explicitly. Deleting mail is never automatic.
    how many spot checks it got right. The user accepts with one click.
 
 ### A normal day (2 to 5 minutes)
-Today shows only three things, so it reads in seconds:
+Today reads like a note from a chief of staff:
 
-1. **Briefing**, in the assistant's voice: "Since 09:00 I handled 18 of 52
-   emails. I answered 4 for Elsa's class and summarised 3 for work. 7 things
-   need you, about 3 minutes."
+1. "Of 52 emails since 09:00, **6 are things you shouldn't miss.** I took care
+   of the rest."
 2. **Ask box**: questions and search by meaning (see below).
-3. **The one thing that needs you**, as a single focused card with its area.
-   One card at a time:
-   - *Reply ready*: a draft written in the user's tone. `Enter` sends, `E`
-     edits, `X` don't reply.
-   - *Your choice needed*: e.g. a meeting invite with two time options already
-     checked against the calendar.
-   - *Needs your attention*: becomes a task with a due date extracted from the
-     mail.
-   - *Follow up*: "Mark hasn't answered in 5 days. Send a nudge?"
-   - *New rule proposal*: "Move Substack newsletters to the digest?"
-   When the decisions are done, the **quick checks** take their place, and
-   then **Done**: "You're clear. Next briefing at 13:00."
+3. **Don't miss**: one card about the thing (area, deadline, what is needed,
+   the prepared answer), then the other things as one line each. The card ends
+   with "From Anna Lind" (opens the source email) and "Why I'm asking". Card
+   types: reply ready, your choice, add to tasks, follow up. When they are done,
+   the **quick checks** take their place, then "Nothing you'd miss".
+4. **Worth knowing**: "The Atlas cutover moved to Mon 7 Dec." "I answered 4
+   parents' group emails."
+5. **Not worth your time**: "40 emails didn't need you: 14 newsletters, 11
+   promotions…"
 
-Below that, a quiet **Coming up** list shows the next three dates picked up
-from mail. Area details, autonomy suggestions and receipts live on their own
-pages, not on Today.
+Rule proposals are about how the assistant works, not the user's life, so they
+wait in Delegation. Dates live on What I know.
 
 ### When curious or worried
 - **Handled**: everything done automatically today, grouped by outcome, each
   with its reason and Undo, and "Always / Never" to teach.
-- **Digest**: low-value mail as one line per item, read when there is time.
+- **Skipped mail**: low-value mail as one line per item, read when there is time.
   Mute, unsubscribe or promote a sender from there.
 
 ### Asking instead of searching
@@ -112,10 +117,10 @@ pages, not on Today.
 
 | Screen | Purpose |
 |---|---|
-| **Today** | Briefing, ask box, one decision at a time (then quick checks), next three dates |
+| **Today** | One-line verdict, ask box, don't miss, worth knowing, not worth your time |
 | **What I know** | Each life area: summary, what was handled today, the user's note, people, learned facts with source; correct, forget, or add an area |
 | **Handled** | Receipts of automatic actions, undo, teach |
-| **Digest** | Low-value mail summarised, sender actions |
+| **Skipped mail** (digest) | Low-value mail summarised, sender actions |
 | **Tasks** | Mine (from mail, with due dates) and Waiting on others |
 | **Delegation** | Autonomy per category, rules, AI proposals, rule sources |
 | **Activity** | Runs, counts, tokens and cost, errors |

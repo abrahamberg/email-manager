@@ -14,7 +14,7 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "work", shortName: "work", kind: "work", name: "Work: Atlas migration",
+    id: "work", shortName: "Work", kind: "work", name: "Work: Atlas migration",
     summary: "Cutover moved one week to 7 Dec. Mark still owes the pilot API keys. Anna needs the Q4 table before Monday's board pack.",
     people: [
       { name: "Anna Lind", role: "Finance, board pack" },
@@ -23,7 +23,7 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "jobs", shortName: "your job search", kind: "jobSearch", name: "Job search: staff backend roles",
+    id: "jobs", shortName: "Job search", kind: "jobSearch", name: "Job search: staff backend roles",
     summary: "Two processes are moving: Fabrikam wants an intro call, Nordpay sent a take-home case due 1 Dec. Three new matching roles came in today.",
     note: "Looking for staff or senior backend roles, remote or Stockholm. Java, C# or Kotlin. Not interested in crypto.",
     people: [
@@ -32,12 +32,12 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "home", shortName: "the car and home", kind: "home", name: "Car, home and health",
+    id: "home", shortName: "Car and home", kind: "home", name: "Car, home and health",
     summary: "Winter tires on Tuesday at 13:00. Dentist on Wednesday at 09:30.",
     people: [],
   },
   {
-    id: "admin", shortName: "bills", kind: "admin", name: "Bills and contracts",
+    id: "admin", shortName: "Bills", kind: "admin", name: "Bills and contracts",
     summary: "The Contoso renewal needs a signature by 28 Nov and the price goes up 8%. November's bank statement arrived.",
     people: [],
   },

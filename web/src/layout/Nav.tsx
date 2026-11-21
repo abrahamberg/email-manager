@@ -1,18 +1,19 @@
 import type { Route } from "../hooks/useHashRoute";
 import { Kbd } from "../components/ui";
 import { useAppData } from "../state/StoreProvider";
+import { dontMiss } from "../domain/briefing";
 
 interface NavLink { route: Route; label: string }
 
 const MAIN: NavLink[] = [
   { route: "today", label: "Today" },
   { route: "tasks", label: "Tasks" },
-  { route: "digest", label: "Digest" },
   { route: "life", label: "What I know" },
 ];
 
 const BEHIND_THE_SCENES: NavLink[] = [
   { route: "handled", label: "Handled" },
+  { route: "digest", label: "Skipped mail" },
   { route: "delegation", label: "Delegation" },
   { route: "activity", label: "Activity" },
   { route: "preferences", label: "Settings" },
@@ -20,7 +21,7 @@ const BEHIND_THE_SCENES: NavLink[] = [
 
 export function Nav({ route, onAsk }: { route: Route; onAsk: () => void }) {
   const data = useAppData();
-  const needYou = data.decisions.length + data.quickChecks.length;
+  const needYou = dontMiss(data.decisions).length;
   return (
     <nav className="nav" aria-label="Main">
       <div className="brand">✦ Email Manager</div>

@@ -94,7 +94,13 @@ export interface ChoiceOption {
 interface DecisionBase {
   id: string;
   email: EmailRef;
+  /** The thing in the user's life this is about, not the email subject. */
+  matter: string;
+  /** What is needed from the user, in one or two sentences. */
+  need: string;
+  /** Why the assistant asks instead of acting: shown on request. */
   why: string;
+  deadline?: string;
 }
 
 export type Decision =
@@ -237,6 +243,15 @@ export interface Briefing {
   since: string;
   arrived: number;
   nextBriefing: string;
+  ignored: { label: string; count: number }[];
+}
+
+/** Something that happened or that the assistant did: worth knowing, nothing to do. */
+export interface ReportItem {
+  id: string;
+  areaId: string;
+  text: string;
+  emailId: string;
 }
 
 export interface AppData {
@@ -246,6 +261,7 @@ export interface AppData {
   areas: Area[];
   facts: Fact[];
   decisions: Decision[];
+  report: ReportItem[];
   snoozed: Decision[];
   quickChecks: QuickCheck[];
   receipts: Receipt[];

@@ -1,6 +1,5 @@
 import { formatTime, plural } from "../../domain/format";
 import { summarizeBriefing, type BriefingSummary } from "../../domain/briefing";
-import { handledHeadline } from "../../domain/areas";
 import { useAppData } from "../../state/StoreProvider";
 
 function greeting(): string {
@@ -10,22 +9,21 @@ function greeting(): string {
   return "Good evening";
 }
 
-function nextStep({ needYou, quickChecks, minutes }: BriefingSummary): string {
-  if (needYou > 0) return `${plural(needYou, "thing")} need you, about ${plural(minutes, "minute")}.`;
-  if (quickChecks > 0) return `Just ${plural(quickChecks, "quick check")} left.`;
-  return "Nothing needs you.";
+function verdict({ needYou, quickChecks }: BriefingSummary): string {
+  if (needYou === 1) return "1 is something you shouldn't miss. I took care of the rest.";
+  if (needYou > 1) return `${needYou} are things you shouldn't miss. I took care of the rest.`;
+  if (quickChecks > 0) return `Nothing you'd miss. I'd like you to check ${plural(quickChecks, "thing")} I wasn't sure about.`;
+  return "Nothing you'd miss. I took care of all of it.";
 }
 
 export function Briefing() {
   const data = useAppData();
   const summary = summarizeBriefing(data);
-
   return (
     <header className="briefing">
       <h1>{greeting()}, Daniel</h1>
       <p className="lead">
-        Since {formatTime(data.briefing.since)} I handled {summary.handled} of {plural(summary.arrived, "email")}. {handledHeadline(data)}{" "}
-        <strong>{nextStep(summary)}</strong>
+        Of {plural(summary.arrived, "email")} since {formatTime(data.briefing.since)}, <strong>{verdict(summary)}</strong>
       </p>
     </header>
   );

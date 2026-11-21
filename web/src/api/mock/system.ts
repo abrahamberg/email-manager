@@ -4,6 +4,12 @@ export const briefing: Briefing = {
   since: "2026-11-21T08:00:00Z",
   arrived: 52,
   nextBriefing: "17:00",
+  ignored: [
+    { label: "newsletters", count: 14 },
+    { label: "promotions", count: 11 },
+    { label: "notifications", count: 9 },
+    { label: "spam", count: 6 },
+  ],
 };
 
 export const runs: Run[] = [

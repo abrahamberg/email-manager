@@ -6,7 +6,61 @@
 
 .decision { display: flex; flex-direction: column; gap: 18px; padding: 22px; }
 
-.decision .why { font-size: 14px; color: var(--text-muted); border-left: 3px solid var(--accent-soft); padding-left: 10px; }
+.decision .matter { font-size: 20px; margin: 4px 0 0; }
+
+.decision .need { font-size: 15px; margin: 0; }
+
+.decision .source { gap: 6px; }
+
+.decision .source details p { margin: 6px 0 0; }
+
+.decision .source summary { cursor: pointer; }
+
+.other-matters { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.other-matter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 2px;
+  cursor: pointer;
+}
+
+.other-matter:hover { color: var(--accent); }
+
+.report { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.report-item {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-small);
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.report-item:hover { color: var(--accent); }
+
+.report-item .area { color: var(--text-muted); min-width: 120px; font-size: 14px; }
+
+@media (max-width: 760px) {
+  .report-item { flex-direction: column; gap: 0; }
+}
+
 
 .decision .actions { padding-top: 4px; }
 
@@ -52,21 +106,3 @@
 
 .answer-matches { gap: 10px; border-top: 1px solid var(--border); padding-top: 12px; }
 
-.event {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  font: inherit;
-  font-size: 14px;
-  color: inherit;
-  background: none;
-  border: 0;
-  border-radius: var(--radius-small);
-  padding: 4px 0;
-  cursor: pointer;
-}
-
-.event:hover { color: var(--accent); }
-
-.event .when { color: var(--text-muted); min-width: 130px; }

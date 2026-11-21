@@ -57,7 +57,7 @@ export function DigestPage() {
   return (
     <>
       <PageHeader
-        title="Digest"
+        title="Skipped mail"
         subtitle={`${plural(count, "email")} that didn't need you, one line each. Read when you have time, or not at all.`}
       />
       <div className="stack">

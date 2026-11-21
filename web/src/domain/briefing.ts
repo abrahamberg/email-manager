@@ -33,8 +33,18 @@ export function summarizeBriefing(data: AppData): BriefingSummary {
   return {
     arrived: data.briefing.arrived,
     handled: handledAutomatically(data),
-    needYou: data.decisions.length,
+    needYou: dontMiss(data.decisions).length,
     quickChecks: data.quickChecks.length,
-    minutes: estimateMinutes(data.decisions, data.quickChecks.length),
+    minutes: estimateMinutes(dontMiss(data.decisions), data.quickChecks.length),
   };
+}
+
+// Rule proposals are about how the assistant works, not about the user's
+// life, so they wait in Delegation instead of competing for attention.
+export function dontMiss(decisions: Decision[]): Decision[] {
+  return decisions.filter((decision) => decision.kind !== "ruleProposal");
+}
+
+export function ignoredTotal(data: AppData): number {
+  return data.briefing.ignored.reduce((sum, group) => sum + group.count, 0);
 }

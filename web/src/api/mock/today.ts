@@ -6,6 +6,9 @@ const unordered: Decision[] = [
   {
     kind: "reply",
     id: "d1",
+    matter: "Q4 numbers for Monday's board pack",
+    need: "Anna needs the Q4 revenue table before Monday. I drafted a reply promising it by Friday.",
+    deadline: "2026-11-23T08:00:00Z",
     email: emails.anna,
     why: "Anna is a frequent contact and asked a direct question with a deadline.",
     confidence: 0.86,
@@ -15,6 +18,8 @@ const unordered: Decision[] = [
   {
     kind: "choice",
     id: "d2",
+    matter: "Fabrikam intro call",
+    need: "Jonas, the hiring manager, wants a call next week. Pick a time and I'll answer him.",
     email: emails.meetingInvite,
     why: "Part of your job search: Fabrikam's hiring manager wants an intro call. Both slots are free in your calendar.",
     question: "Which time should I offer Jonas?",
@@ -28,8 +33,11 @@ const unordered: Decision[] = [
   {
     kind: "choice",
     id: "d6",
+    matter: "Elsa's trip to Skansen",
+    need: "The class needs your consent and 150 kr by Friday.",
+    deadline: "2026-11-27T16:00:00Z",
     email: lifeEmails.classTrip,
-    why: "Elsa's class trip needs a signature and a payment. I never sign or pay on my own. Due Friday 27 Nov.",
+    why: "It needs a signature and a payment. I never sign or pay on my own.",
     question: "What should I do about the Skansen trip?",
     recommended: 0,
     options: [
@@ -41,14 +49,20 @@ const unordered: Decision[] = [
   {
     kind: "reply",
     id: "d7",
+    matter: "Saga's party on Saturday",
+    need: "Elsa is invited and your Saturday is free. I drafted a yes.",
+    deadline: "2026-11-25T16:00:00Z",
     email: lifeEmails.party,
-    why: "Elsa is invited to Saga's party on Saturday 28 Nov. Your calendar is free. RSVP is due Wednesday.",
+    why: "I answer invitations for Elsa only after you've said yes once.",
     confidence: 0.8,
     draft: "Hi Lina,\n\nThanks! Elsa would love to come on Saturday. I'll drop her off at Lekland at 14:00.\n\nBest,\nDaniel",
   },
   {
     kind: "task",
     id: "d3",
+    matter: "Contoso renewal",
+    need: "The contract renews with an 8% price rise unless you act. It needs your signature.",
+    deadline: "2026-11-28T16:00:00Z",
     email: emails.contract,
     why: "A legal document with a deadline and a price change. I won't act on this myself.",
     title: "Review Contoso renewal (pricing changed in section 4) and sign",
@@ -57,6 +71,8 @@ const unordered: Decision[] = [
   {
     kind: "followUp",
     id: "d4",
+    matter: "Pilot API keys from Mark",
+    need: "The Atlas cutover waits on these. You asked 5 days ago with no answer. I can nudge him.",
     email: emails.markThread,
     why: "You asked Mark a question 5 days ago and he hasn't answered.",
     waitingDays: 5,
@@ -65,6 +81,8 @@ const unordered: Decision[] = [
   {
     kind: "ruleProposal",
     id: "d5",
+    matter: "Recruiter mail",
+    need: "Stop showing cold recruiter emails?",
     email: emails.recruiter,
     why: "You ignored the last 9 recruiter emails from this kind of sender.",
     ruleId: "r-ai-1",

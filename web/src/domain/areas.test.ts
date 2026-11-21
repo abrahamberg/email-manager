@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { AppData } from "./types";
 import { mockApi } from "../api/api";
-import { areaActivity, describeHandled, handledHeadline, upcoming } from "./areas";
+import { areaActivity, describeHandled, upcoming } from "./areas";
 
 let data: AppData;
 
@@ -26,8 +26,3 @@ describe("upcoming", () => {
   });
 });
 
-describe("handledHeadline", () => {
-  it("names the busiest areas by what was done most", () => {
-    expect(handledHeadline(data)).toBe("I answered 4 for Elsa's class and summarised 3 for work.");
-  });
-});

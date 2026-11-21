@@ -28,6 +28,8 @@ function proposeCorrection(data: AppData, receipt: Receipt): AppData {
     kind: "ruleProposal" as const,
     id: newId("d"),
     email: receipt.email,
+    matter: `Mail from ${receipt.email.from.name}`,
+    need: "Add a rule so I don't make this mistake again?",
     why: "You said my decision on this mail was wrong.",
     ruleId: rule.id,
   };

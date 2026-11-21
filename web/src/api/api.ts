@@ -7,6 +7,7 @@ import { briefing, profile, runs, settings } from "./mock/system";
 import { details } from "./mock/details";
 import { lifeDetails } from "./mock/lifeDetails";
 import { areas, facts } from "./mock/areas";
+import { report } from "./mock/report";
 
 // The one seam between the panel and the server. The real implementation
 // will call the backend over HTTP; the mock returns fixed data.
@@ -16,6 +17,6 @@ export interface EmailManagerApi {
 
 export const mockApi: EmailManagerApi = {
   async loadAppData() {
-    return structuredClone({ briefing, profile, areas, facts, details: { ...details, ...lifeDetails }, decisions, snoozed: [], quickChecks, receipts, digest, tasks, policies, rules, feeds, runs, settings });
+    return structuredClone({ briefing, profile, areas, facts, details: { ...details, ...lifeDetails }, decisions, report, snoozed: [], quickChecks, receipts, digest, tasks, policies, rules, feeds, runs, settings });
   },
 };

@@ -2,3 +2,22 @@
 
 .facts .fact { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .facts.list > li { padding: 10px 0; }
+
+.event {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-small);
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.event:hover { color: var(--accent); }
+
+.event .when { color: var(--text-muted); min-width: 130px; }

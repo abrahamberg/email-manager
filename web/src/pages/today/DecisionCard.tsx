@@ -1,8 +1,7 @@
 import { useState } from "react";
 import type { Decision } from "../../domain/types";
-import { DECISION_TITLES } from "../../domain/labels";
-import { EmailMeta } from "../../components/EmailMeta";
-import { Button, Chip } from "../../components/ui";
+import { formatDay } from "../../domain/format";
+import { Button, Chip, Kbd } from "../../components/ui";
 import { areaById } from "../../domain/areas";
 import { useShortcuts, type ShortcutMap } from "../../hooks/useShortcuts";
 import { useStore } from "../../state/StoreProvider";
@@ -41,17 +40,14 @@ export function DecisionCard({ decision, shortcutsEnabled }: { decision: Decisio
   useShortcuts({ "mod+Enter": accept, Escape: () => setEditing(false) }, editing);
 
   return (
-    <article className="card decision" aria-label={DECISION_TITLES[decision.kind]}>
-      <header className="stack">
-        <div className="spread">
-          <span className="row">
-            <span className="section-title">{DECISION_TITLES[decision.kind]}</span>
-            {area && <Chip>{area.name}</Chip>}
-          </span>
-          <Button variant="quiet" size="small" onClick={() => open(decision.email.id)} shortcut="O">Open email</Button>
+    <article className="card decision" aria-label={decision.matter}>
+      <header className="stack-tight">
+        <div className="row">
+          {area && <Chip>{area.shortName}</Chip>}
+          {decision.deadline && <Chip tone="warn">by {formatDay(decision.deadline)}</Chip>}
         </div>
-        <EmailMeta email={decision.email} />
-        <p className="why">{decision.why}</p>
+        <h3 className="matter">{decision.matter}</h3>
+        <p className="need">{decision.need}</p>
       </header>
 
       <DecisionBody decision={decision} edit={edit} editing={editing} rules={state.data.rules} onEdit={setEdit} />
@@ -62,6 +58,14 @@ export function DecisionCard({ decision, shortcutsEnabled }: { decision: Decisio
         <Button onClick={snooze} shortcut="S">Snooze</Button>
         <Button variant="quiet" onClick={dismiss} shortcut="X">{labels.dismiss}</Button>
       </footer>
+      <div className="row source muted small">
+        <button type="button" className="link-button" onClick={() => open(decision.email.id)}>From {decision.email.from.name} <Kbd>O</Kbd></button>
+        <span aria-hidden>·</span>
+        <details>
+          <summary>Why I'm asking</summary>
+          <p>{decision.why}</p>
+        </details>
+      </div>
     </article>
   );
 }
