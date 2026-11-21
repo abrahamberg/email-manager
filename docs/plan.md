@@ -83,13 +83,14 @@ These tasks only need T0, so most of them can run in parallel.
 - Touches: `server/src/lowValue/isLowValue.ts`, `simhash.ts`.
 - Done: pure, table-tested.
 
-**T8 · O · Store**
+**T8 · O · Store (Postgres)**
 - Reads: `CLAUDE.md`, `shared/src/types.ts`, `ports.ts`.
-- Touches: `server/src/store/db.ts`, `migrations/001_init.sql`, one repo file
-  per table (messages, outcomes, rules and rule versions, senders, runs, areas,
-  facts, matters, streams and items, embeddings).
-- Done: the repos are tested on an in-memory `node:sqlite`. Bodies are never
-  stored, only headers, compact text and summaries.
+- Touches: `server/src/store/db.ts` (`postgres` driver), `migrations/*.sql`, a
+  tiny migration runner, and one repo file per table (messages, outcomes, rules
+  and rule versions, senders, runs, areas, facts, matters, streams and items,
+  embeddings stored as `real[]`).
+- Done: the repos are tested on in-process PGlite, so tests need no Docker.
+  Bodies are never stored, only headers, compact text and summaries.
 
 **Providers (decided):** generic IMAP/SMTP, Office 365 and Gmail are all
 supported through one IMAP adapter and one SMTP sender. Only sign-in differs:
@@ -127,7 +128,7 @@ Online IMAP and SMTP.
 - Touches: `server/src/pipeline/processEmail.ts`, `outcomes.ts`, `runMailbox.ts`.
 - Done: in-memory fakes prove the order (spam, then rules, then low-value, then
   AI) and that AI is not called when logic decides. Dry-run touches nothing. A
-  second overlapping run is a no-op because of the lock.
+  second overlapping run is a no-op because of a Postgres advisory lock.
 
 **T11 · O · HTTP and auth (security)**
 - Reads: `CLAUDE.md`, `config.ts`, design §3.5.
@@ -136,13 +137,19 @@ Online IMAP and SMTP.
   the allow-list gets 403, the internal run port needs a token and is a
   separate listener, and errors never echo secrets.
 
-**T12 · S · Container and Kubernetes**
-- Reads: `CLAUDE.md`, design §3.5.
+**T12 · S · Image and deploy manifests**
+- Reads: `CLAUDE.md`, design §3.5, and in the kube repo `AGENTS.md`,
+  `gitops/platformengr-portal/*` (the pattern to copy) and
+  `gitops/victoria/victorialogs-ingress.yaml` (the oauth2-proxy annotations).
 - Touches: `Dockerfile` (distroless, non-root, read-only root filesystem),
-  `deploy/k8s/*.yaml` (Deployment with the Rspamd sidecar, CronJob, Service,
-  NetworkPolicy, PVC, Secret references).
-- Done: `kubectl apply --dry-run=client` passes. Opus reviews the
-  NetworkPolicy diff.
+  `.github/workflows/image.yml` (push to GHCR as `sha-*`), and in the kube repo
+  `gitops/email-manager/`: the ArgoCD Application, a Deployment (API and
+  panel), a CronJob (the worker, same image), a small Rspamd Deployment and
+  Service, an Ingress behind oauth2-proxy that forwards `X-Auth-Request-Email`,
+  a NetworkPolicy, a ConfigMap, and an ExternalSecret on `bitwarden-store-cluster`.
+- Done: `kubectl apply --dry-run=client` passes on every file. Opus reviews
+  the NetworkPolicy and Ingress diff. Nothing is pushed to the kube repo
+  before the Bitwarden items exist.
 
 **Milestone 1 check:** a dry run against a real mailbox logs a sensible outcome
 for every message.
@@ -249,7 +256,7 @@ T13 → T14 → { T15, T16 } → { T17, T18 } ; T13 → T19 ; T8 → { T20, T21 
 ```
 
 By count, 16 of the 28 tasks are Sonnet and 12 are Opus. The Opus tasks are
-the ones where a mistake is costly: contracts, the store schema, IMAP state,
+the ones where a mistake is costly: contracts, the Postgres schema, IMAP state,
 OAuth tokens, the pipeline, auth, feeds, AI safety and matter grouping.
 
 ## Keeping token use low

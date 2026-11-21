@@ -97,8 +97,8 @@ types between API and UI, and the best IMAP/MIME libraries of any ecosystem.
 `zod` validates every boundary (config, rules, feeds, AI output, HTTP input).
 
 Runtime dependencies kept to: `imapflow`, `mailparser`, `nodemailer`,
-`@anthropic-ai/sdk`, `zod`, `hono` (tiny typed HTTP server), and SQLite
-(`node:sqlite`, built in; `better-sqlite3` if it proves unstable).
+`@anthropic-ai/sdk`, `zod`, `hono` (tiny typed HTTP server), and the `postgres`
+driver for the cluster's shared Postgres (PGlite in tests).
 Tests: `vitest`. Frontend: React, Vite, TypeScript, no UI kit.
 
 ## 3. Architecture
@@ -137,7 +137,7 @@ what the AI said), which is what makes undo and trust possible.
 
 - **Functional core, imperative shell.** Rule matching, low-value detection,
   reply policy and email compaction are pure functions: plain data in, plain
-  data out, tested without mocks. IMAP, HTTP, SQLite and Claude live in
+  data out, tested without mocks. IMAP, HTTP, Postgres and Claude live in
   adapters at the edge.
 - **Ports and adapters (dependency inversion).** The pipeline depends on small
   interfaces: `Mailbox`, `SpamCheck`, `Classifier`, `RuleSource`, `TaskStore`,
@@ -200,18 +200,14 @@ Email content is untrusted input and can contain prompt injection. So:
                    ▼
  ┌──────────── Deployment (1 replica) ───────────────┐
  │  email-manager: API + static React panel          │
- │  rspamd sidecar (localhost:11333)                 │
- │  SQLite on a PVC                                  │
  └───────────────────────────────────────────────────┘
-                   ▲  POST /internal/runs (token, cluster-only port)
-            CronJob (every N minutes, curl image)
+ CronJob (every N minutes, same image): the worker
+ rspamd Deployment + Service · shared Postgres (shared-namespace)
 ```
 
-- The CronJob triggers a run instead of running its own worker, so there is a
-  **single writer** to SQLite and no shared-volume problems. One image, one
-  process. If the cluster already has Postgres, the worker could run in the
-  CronJob directly instead; that is open question 5.
-- A run takes a lock, so overlapping triggers do nothing.
+- The CronJob runs the worker from the same image. State lives in the shared
+  Postgres, so there is no volume to share.
+- A run takes a Postgres advisory lock, so overlapping runs do nothing.
 - **Auth:** the app trusts the user header only because a NetworkPolicy lets
   ingress reach the public port from the oauth2-proxy alone. Middleware
   requires the header and checks it against `ALLOWED_EMAILS`. The internal run
@@ -272,7 +268,7 @@ email-manager/
 │   │   │   ├── draftReply.ts
 │   │   │   └── prompts.ts
 │   │   ├── replies/replyPolicy.ts  # pure: draft or send
-│   │   ├── store/                  # SQLite: db.ts, migrations/, one repo per table
+│   │   ├── store/                  # Postgres: db.ts, migrations/, one repo per table
 │   │   └── http/                   # app.ts, auth.ts, routes/*.ts
 │   └── test/
 │       ├── fixtures/*.eml          # real-world samples, anonymised
@@ -319,8 +315,8 @@ email-manager/
 3. Agree that v1 is drafts-only, with auto-send later?
 4. Should tasks live only in the panel, or also be pushed somewhere (GitHub
    issues, Todoist, a calendar)?
-5. Is there a Postgres on the cluster you'd like to use, or is SQLite on a PVC
-   fine?
+5. ~~Postgres or SQLite?~~ **Decided:** the cluster's shared Postgres. The
+   worker runs in the CronJob and an advisory lock prevents overlapping runs.
 6. One mailbox or several?
 
 ## Sources
