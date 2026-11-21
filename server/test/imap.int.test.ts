@@ -94,7 +94,9 @@ describe.skipIf(!host)("imapMailbox against GreenMail", () => {
     const recreated = `Gone-${run}`;
     await c.mailboxCreate(recreated);
     // STATUS, not SELECT: GreenMail 2.1.3 cannot delete a folder any session has selected.
-    const before = (await c.status(recreated, { uidValidity: true })).uidValidity;
+    const status = await c.status(recreated, { uidValidity: true });
+    const before = status ? status.uidValidity : undefined;
+    expect(before).toBeDefined();
     await c.mailboxDelete(recreated);
     await new Promise((r) => setTimeout(r, 1100));
     await c.mailboxCreate(recreated);
