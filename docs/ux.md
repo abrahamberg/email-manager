@@ -88,7 +88,8 @@ Today reads like a note from a chief of staff:
    the **quick checks** take their place, then "Nothing you'd miss".
 4. **Worth knowing**: "The Atlas cutover moved to Mon 7 Dec." "I answered 4
    parents' group emails."
-5. **Not worth your time**: "40 emails didn't need you: 14 newsletters, 11
+5. **Picked for you**: noisy streams reduced to what matches (see below).
+6. **Not worth your time**: "40 emails didn't need you: 14 newsletters, 11
    promotions…"
 
 Rule proposals are about how the assistant works, not the user's life, so they
@@ -99,6 +100,24 @@ wait in Delegation. Dates live on What I know.
   with its reason and Undo, and "Always / Never" to teach.
 - **Skipped mail**: low-value mail as one line per item, read when there is time.
   Mute, unsubscribe or promote a sender from there.
+
+### Noisy streams with a few good items
+Job alerts, newsletters, property alerts: many items, a few worth seeing. The
+same mechanism handles all of them, nothing is job-specific:
+
+1. **Detect the stream** with logic (same sender, bulk headers, frequency).
+2. **Split each email into items** (one job, one article): a parser for known
+   formats, a cheap AI extraction otherwise.
+3. **Match items to the user's interests**, taken from What I know (e.g. the
+   job search note), using embeddings.
+4. **Show the minimum**: "LinkedIn job alerts · 2 of 34 this week worth a
+   look", each pick with title, three facts, one line on why, and a closing date
+   if any. The rest is one line: "32 others: mostly frontend, crypto…".
+5. **Learn**: "More like this" and "Not for me" adjust the interest. A stream
+   with no matches for weeks gets an unsubscribe suggestion.
+
+AI writes only the "why" line for the top few. A pick moves to Don't miss only
+when time matters (closing soon, a company already in contact).
 
 ### Asking instead of searching
 - The ask box on Today (and the command bar, `/`) answers questions from what

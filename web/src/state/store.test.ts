@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { AppData } from "../domain/types";
 import { mockApi } from "../api/api";
 import { answerQuestion } from "./assistant";
+import { visiblePicks } from "../domain/briefing";
 import { storeReducer, type StoreState } from "./history";
 
 let initial: StoreState;
@@ -126,5 +127,14 @@ describe("what I know", () => {
     const added = run(initial, { type: "area/add", name: "Football club", note: "Coach on Saturdays" });
     expect(added.data.areas.at(-1)).toMatchObject({ name: "Football club", note: "Coach on Saturdays", kind: "other" });
     expect(run(initial, { type: "area/add", name: " ", note: "" }).data.areas).toHaveLength(initial.data.areas.length);
+  });
+});
+
+describe("picked for you", () => {
+  it("hides an item you said is not for you and keeps the others", () => {
+    const stream = initial.data.streams[0]!;
+    const [first, second] = stream.picks;
+    const { data } = run(initial, { type: "pick/feedback", streamId: stream.id, itemId: first!.id, feedback: "less" });
+    expect(visiblePicks(data.streams[0]!).map((item) => item.id)).toEqual([second!.id]);
   });
 });

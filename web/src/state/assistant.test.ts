@@ -31,7 +31,7 @@ describe("search by meaning", () => {
   it("finds Java, C# and job mail when asked about programming", () => {
     const subjects = searchByMeaning(data, "programming").map((email) => email.subject);
     expect(subjects).toEqual(expect.arrayContaining([
-      "3 new jobs for you: Java, C#, Kotlin",
+      "34 new jobs for you: Java, C#, Kotlin and more",
       "Next step: take-home case by 1 Dec",
       "Meetup 27 Nov: coroutines in practice",
     ]));

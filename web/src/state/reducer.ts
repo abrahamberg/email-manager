@@ -4,6 +4,7 @@ import { acceptDecision, dismissDecision, restoreSnoozed, snoozeDecision } from 
 import { answerQuickCheck, teachFromReceipt, undoReceipt } from "./receipts";
 import { applyPreset, saveRule, setPolicyLevel, setRuleStatus } from "./delegation";
 import { addArea, forgetFact, setAreaNote } from "./life";
+import { giveFeedback } from "./streams";
 import { setDigestState, toggleTask, unsubscribeCategory, updateSettings } from "./library";
 
 export function applyAction(data: AppData, action: Action): AppData {
@@ -23,6 +24,7 @@ export function applyAction(data: AppData, action: Action): AppData {
     case "rule/setStatus": return setRuleStatus(data, action.id, action.status);
     case "rule/save": return saveRule(data, action.id, action.when, action.then);
     case "settings/update": return updateSettings(data, action.patch);
+    case "pick/feedback": return giveFeedback(data, action.streamId, action.itemId, action.feedback);
     case "fact/forget": return forgetFact(data, action.id);
     case "area/setNote": return setAreaNote(data, action.id, action.note);
     case "area/add": return addArea(data, action.name, action.note);

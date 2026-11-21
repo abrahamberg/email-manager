@@ -50,8 +50,8 @@ export const lifeEmails = {
     snippet: "We need one more week for the data migration dry run. New cutover: Monday 7 Dec.",
   }),
   jobAlert: email({
-    id: "j1", name: "Job alerts", address: "alerts@jobs.example", areaId: "jobs", category: "newsletter",
-    subject: "3 new jobs for you: Java, C#, Kotlin", receivedAt: "2026-11-21T06:00:00Z",
+    id: "j1", name: "LinkedIn Job Alerts", address: "jobs-noreply@linkedin.example", areaId: "jobs", category: "newsletter",
+    subject: "34 new jobs for you: Java, C#, Kotlin and more", receivedAt: "2026-11-21T06:00:00Z",
     snippet: "Senior Java Developer (remote), C# Backend Engineer (Stockholm), Staff Engineer, Kotlin.",
   }),
   nordpay: email({

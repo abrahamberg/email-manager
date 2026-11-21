@@ -1,4 +1,4 @@
-import type { AppData, Decision, DecisionKind } from "./types";
+import type { AppData, Decision, DecisionKind, Stream, StreamItem } from "./types";
 
 const SECONDS_PER_DECISION: Record<DecisionKind, number> = {
   reply: 45,
@@ -47,4 +47,8 @@ export function dontMiss(decisions: Decision[]): Decision[] {
 
 export function ignoredTotal(data: AppData): number {
   return data.briefing.ignored.reduce((sum, group) => sum + group.count, 0);
+}
+
+export function visiblePicks(stream: Stream): StreamItem[] {
+  return stream.picks.filter((item) => item.feedback !== "less");
 }

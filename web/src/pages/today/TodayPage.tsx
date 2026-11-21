@@ -8,6 +8,7 @@ import { DontMiss } from "./DontMiss";
 import { QuickChecks } from "./QuickChecks";
 import { WhatHappened } from "./WhatHappened";
 import { Ignored } from "./Ignored";
+import { PickedForYou } from "./PickedForYou";
 import "./today.css";
 
 function SnoozedNote() {
@@ -50,6 +51,7 @@ export function TodayPage({ shortcutsEnabled }: { shortcutsEnabled: boolean }) {
       <Focus shortcutsEnabled={shortcutsEnabled} />
       <SnoozedNote />
       <WhatHappened />
+      <PickedForYou />
       <Ignored />
     </div>
   );

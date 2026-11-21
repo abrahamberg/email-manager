@@ -55,7 +55,7 @@ export const lifeDetails: Record<string, EmailDetail> = {
     viaAi("Team mail", "An update with no question for you. Updated the Atlas summary and the date, moved to the digest.", 690),
   ),
   [e.jobAlert.id]: detail(
-    "3 new jobs match your search:\n\n• Senior Java Developer, Remote (EU)\n• C# Backend Engineer, Stockholm\n• Staff Engineer, Kotlin, Hybrid Stockholm",
+    "34 new jobs match your search. Top picks:\n\n• Staff Backend Engineer, Klarna, Stockholm hybrid (Kotlin, payments)\n• Senior Software Engineer, Platform, Spotify, Remote EU (Java)\n• Senior Frontend Engineer, Volvo Cars, Gothenburg\n• Blockchain Engineer, CoinCo, Remote\n• …and 30 more",
     viaHeaders("Job alert (List-Unsubscribe). Matches your job search, so it's in the digest under Job search."),
     ["List-Unsubscribe", "Precedence: bulk"],
   ),

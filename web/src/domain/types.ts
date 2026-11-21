@@ -246,6 +246,28 @@ export interface Briefing {
   ignored: { label: string; count: number }[];
 }
 
+/** One item pulled out of a high-volume stream (a job in an alert, an article in a newsletter). */
+export interface StreamItem {
+  id: string;
+  title: string;
+  facts: string[];
+  why: string;
+  closes?: string;
+  feedback?: "more" | "less";
+}
+
+/** A sender that sends many items, of which only a few match the user's interests. */
+export interface Stream {
+  id: string;
+  name: string;
+  areaId: string;
+  emailId: string;
+  period: string;
+  total: number;
+  picks: StreamItem[];
+  rest: string;
+}
+
 /** Something that happened or that the assistant did: worth knowing, nothing to do. */
 export interface ReportItem {
   id: string;
@@ -262,6 +284,7 @@ export interface AppData {
   facts: Fact[];
   decisions: Decision[];
   report: ReportItem[];
+  streams: Stream[];
   snoozed: Decision[];
   quickChecks: QuickCheck[];
   receipts: Receipt[];

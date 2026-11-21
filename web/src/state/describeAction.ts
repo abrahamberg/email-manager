@@ -23,6 +23,7 @@ export function describeAction(before: AppData, action: Action): string {
     case "rule/setStatus": return `Rule ${action.status}`;
     case "rule/save": return action.id ? "Rule updated" : "Rule added";
     case "settings/update": return "Settings saved";
+    case "pick/feedback": return action.feedback === "more" ? "I'll look for more like this" : "Got it, fewer like this";
     case "fact/forget": return `Forgot "${before.facts.find((fact) => fact.id === action.id)?.title ?? "that"}"`;
     case "area/setNote": return "Got it, I'll use that from now on";
     case "area/add": return `Now keeping track of ${action.name.trim()}`;
