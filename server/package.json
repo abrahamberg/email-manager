@@ -8,11 +8,21 @@
     "build": "esbuild src/main.ts src/worker.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
     "@email-manager/shared": "*",
+    "@hono/node-server": "^2.1.11",
+    "hono": "^4.13.19",
+    "imapflow": "^2.12.2",
+    "mailparser": "^3.15.0",
+    "nodemailer": "^10.6.1",
+    "postgres": "^4.1.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
+    "@types/mailparser": "^3.9.0",
     "@types/node": "^22.20.5",
+    "@types/nodemailer": "^8.0.2",
     "esbuild": "^0.28.2",
     "typescript": "^5.9.3",
     "vitest": "^5.1.1"
