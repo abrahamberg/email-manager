@@ -1,0 +1,33 @@
+{
+  "id": "msg_fixture_triage_unknown_area",
+  "type": "message",
+  "role": "assistant",
+  "model": "triage-model",
+  "container": null,
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "sig"
+    },
+    {
+      "type": "text",
+      "text": "{\"tier\": \"worthKnowing\", \"category\": \"notification\", \"areaId\": \"area-made-up\", \"matter\": \"A very long matter title that keeps going well past the sixty character limit\", \"need\": \"Nothing needed.\", \"deadline\": \"next week\", \"needsReply\": false, \"facts\": [{\"kind\": \"note\", \"title\": \"n0\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n1\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n2\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n3\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n4\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n5\", \"detail\": \"d\", \"at\": \"not a date\"}, {\"kind\": \"note\", \"title\": \"n6\", \"detail\": \"d\", \"at\": \"not a date\"}], \"confidence\": 1.4, \"why\": \"Status update.\"}",
+      "citations": null
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 412,
+    "output_tokens": 58,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 1200,
+    "cache_creation": null,
+    "inference_geo": "global",
+    "output_tokens_details": null,
+    "server_tool_use": null,
+    "service_tier": "standard"
+  }
+}
