@@ -1,6 +1,5 @@
 import type { Outcome } from "@email-manager/shared";
 import type { Db } from "../../store/db";
-import { ensureTables } from "./tables";
 
 export interface ReceiptRef { messageId: string; uid: number; outcome: Outcome }
 
@@ -16,7 +15,6 @@ export async function findReceipt(db: Db, id: string): Promise<ReceiptRef | unde
 }
 
 export async function markUndone(db: Db, id: string, taught?: string): Promise<void> {
-  await ensureTables(db);
   await db.query(
     `INSERT INTO receipt_marks (receipt_id, undone, taught) VALUES ($1, true, $2)
      ON CONFLICT (receipt_id) DO UPDATE SET undone = true, taught = COALESCE($2, receipt_marks.taught)`,
@@ -26,7 +24,6 @@ export async function markUndone(db: Db, id: string, taught?: string): Promise<v
 /** Only queues the move; executing it is the next pipeline run's job. */
 export async function queueMoveToInbox(db: Db, r: ReceiptRef): Promise<void> {
   if (!MOVES_BACK.has(r.outcome)) return;
-  await ensureTables(db);
   await db.query(
     "INSERT INTO pending_mailbox_actions (message_id, uid, action) VALUES ($1, $2, 'move_to_inbox')", [r.messageId, r.uid]);
 }

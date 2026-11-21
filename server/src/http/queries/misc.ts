@@ -1,6 +1,5 @@
 import type { Category } from "@email-manager/shared";
 import type { Db } from "../../store/db";
-import { ensureTables } from "./tables";
 
 const exists = async (db: Db, sql: string, params: unknown[]) => (await db.query(sql, params)).length > 0;
 
@@ -21,13 +20,11 @@ export function digestGroupExists(db: Db, groupId: string): Promise<boolean> {
 }
 
 export async function setDigestState(db: Db, groupId: string, state: string): Promise<void> {
-  await ensureTables(db);
   await db.query(
     "INSERT INTO digest_states (group_id, state) VALUES ($1, $2) ON CONFLICT (group_id) DO UPDATE SET state = $2", [groupId, state]);
 }
 
 export async function unsubscribeCategory(db: Db, category: Category): Promise<void> {
-  await ensureTables(db);
   await db.query(
     `INSERT INTO digest_states (group_id, state)
      SELECT DISTINCT 'dg-' || m.from_address, 'unsubscribed' FROM outcomes o JOIN messages m USING (message_id)
