@@ -1,0 +1,4 @@
+.task { display: flex; gap: 12px; align-items: flex-start; }
+.task input { width: 18px; height: 18px; margin-top: 3px; flex: none; accent-color: var(--accent); }
+.task .title { font-weight: 500; }
+.task[data-done="true"] .title { text-decoration: line-through; color: var(--text-muted); }

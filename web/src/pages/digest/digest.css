@@ -1,0 +1,4 @@
+.digest-group { display: flex; flex-direction: column; gap: 10px; }
+.digest-group[data-state="muted"], .digest-group[data-state="unsubscribed"] { opacity: 0.6; }
+.digest-entries { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.digest-entries .subject { font-weight: 500; }

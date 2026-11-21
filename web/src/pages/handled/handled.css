@@ -1,0 +1,9 @@
+.receipt { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.receipt[data-undone="true"] { opacity: 0.55; }
+.receipt-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 360px; }
+.receipt-main .sender { font-weight: 600; }
+.receipt-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+@media (max-width: 760px) {
+  .receipt-side { align-items: flex-start; }
+}

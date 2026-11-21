@@ -1,0 +1,45 @@
+.briefing { display: flex; flex-direction: column; gap: 8px; }
+.briefing .lead { font-size: 18px; color: var(--text-muted); max-width: 60ch; }
+.briefing .lead strong { color: var(--text); }
+
+.decision { display: flex; flex-direction: column; gap: 18px; padding: 22px; }
+.decision .why { font-size: 14px; color: var(--text-muted); border-left: 3px solid var(--accent-soft); padding-left: 10px; }
+.decision .actions { padding-top: 4px; }
+
+.draft {
+  margin: 0;
+  white-space: pre-wrap;
+  background: var(--surface-muted);
+  border-radius: var(--radius-small);
+  padding: 14px 16px;
+}
+
+.choices { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.choices legend { margin-bottom: 8px; }
+.choice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+.choice[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice input { width: auto; margin: 0; }
+.block { display: block; }
+
+.task-preview { display: flex; flex-direction: column; gap: 4px; background: var(--surface-muted); border-radius: var(--radius-small); padding: 14px 16px; }
+
+.up-next { min-width: 0; margin: 0; padding: 0 0 0 4px; list-style: none; display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); font-size: 14px; }
+.up-next li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list > li { padding: 14px 18px; }
+.list > li + li { border-top: 1px solid var(--border); }
+.quick-check { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.stack-tight { display: flex; flex-direction: column; gap: 2px; }
+
+.done { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 20px; }
+.done-mark { width: 48px; height: 48px; border-radius: 50%; background: var(--ok-soft); color: var(--ok); display: grid; place-items: center; font-size: 22px; }

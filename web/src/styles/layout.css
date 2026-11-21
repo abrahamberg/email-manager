@@ -1,0 +1,73 @@
+.shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+
+.nav {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 12px;
+  border-right: 1px solid var(--border);
+}
+.nav .brand { font-weight: 700; padding: 4px 10px 16px; display: flex; align-items: center; gap: 8px; }
+.nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-small);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.nav a:hover { background: var(--surface-muted); color: var(--text); }
+.nav a[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+.nav .ask { margin-top: auto; justify-content: space-between; width: 100%; }
+
+.main { padding: 32px 40px 96px; max-width: 920px; width: 100%; }
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--warn-soft);
+  color: var(--warn);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.overlay { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; z-index: 40; }
+.palette { width: min(640px, 100%); background: var(--surface); border-radius: var(--radius); box-shadow: 0 20px 60px rgb(0 0 0 / 0.3); overflow: hidden; }
+.palette input { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 16px 18px; font-size: 17px; }
+.palette input:focus-visible { outline: none; }
+.palette .body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; max-height: 50vh; overflow-y: auto; }
+.palette .examples button { text-align: left; }
+
+@media (max-width: 760px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .nav {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    flex-direction: row;
+    padding: 6px;
+    border-right: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    overflow-x: auto;
+    z-index: 20;
+  }
+  .nav .brand, .nav .ask .kbd, .nav .count { display: none; }
+  .nav a { flex-direction: column; font-size: 12px; padding: 6px 10px; }
+  .nav .ask { margin-top: 0; width: auto; }
+  .main { padding: 20px 16px 120px; }
+  .notice { bottom: 84px; }
+}

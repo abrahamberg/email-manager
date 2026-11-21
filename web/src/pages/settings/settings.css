@@ -1,0 +1,9 @@
+.field { display: grid; grid-template-columns: 1fr minmax(160px, 240px); gap: 16px; align-items: center; padding: 6px 0; }
+.field .control { display: flex; justify-content: flex-end; }
+.field input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
+.nowrap { flex-wrap: nowrap; }
+
+@media (max-width: 560px) {
+  .field { grid-template-columns: 1fr; gap: 6px; }
+  .field .control { justify-content: flex-start; }
+}
