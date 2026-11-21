@@ -222,6 +222,27 @@ for every message.
   wait for approval. It covers quick checks, accuracy per category, and the
   autonomy suggestions.
 
+**T21b · S · Store additions found while building** (migration 002)
+- Matters: thread ids (via matter_messages ⋈ messages), entity keys, vector, for
+  `MatterCandidate` in `life/assignMatter.ts`. Policies with level and answer
+  tallies, `setPolicyLevel`. Quick checks table with `answerQuickCheck`. Rule
+  listing in the shared `Rule` shape and `setRuleStatus` returning a boolean
+  (`DelegationStore` in `http/routes/delegation.ts`). A `tier` column on
+  outcomes so the report uses worthKnowing. Tasks table. Last briefing time.
+- Done: repos tested on PGlite, and `delegationRoutes` and `buildAppData` use
+  the real store with no ad-hoc interfaces left.
+
+**T21c · O · Wire Phase 2 into the run**
+- Move the run wiring into `server/src/wiring/buildRunDeps.ts`, used by both
+  `worker.ts` and `main.ts`. The triage hook saves the tier, decision (matter,
+  need, deadline), facts, matter assignment, and an embedding for the message
+  and its facts. For needsReply it drafts, then `replyPolicy`, then appends the
+  draft (never sends in v1). Bulk mail goes through streams: detect, split,
+  match interests from area notes, store picks and write one AI "why" line for
+  the top picks only. Mount the ask, today and delegation routes in `app.ts`.
+- Done: a pipeline test with fakes covers each tier end to end, and the
+  whole suite passes.
+
 ## Phase 3: panel on real data
 
 **T22 · S · Real API client**
@@ -274,5 +295,5 @@ OAuth tokens, the pipeline, auth, feeds, AI safety and matter grouping.
 ## Progress
 
 - [x] T0 · [x] T1 · [x] T2 · [x] T3 · [x] T4 · [x] T5 · [x] T6 · [x] T7 · [x] T8 · [x] T9 · [x] T9b · [x] T9c · [x] T10 · [x] T11 · [x] T12
-- [x] T13 · [x] T14 · [x] T15 · [x] T16 · [ ] T17 · [x] T18 · [x] T19 · [x] T20 · [x] T21
+- [x] T13 · [x] T14 · [x] T15 · [x] T16 · [x] T17 · [x] T18 · [x] T19 · [x] T20 · [x] T21
 - [ ] T22 · [ ] T23 · [ ] T24 · [ ] T25
