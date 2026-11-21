@@ -66,15 +66,14 @@ explicitly. Deleting mail is never automatic.
    how many spot checks it got right. The user accepts with one click.
 
 ### A normal day (2 to 5 minutes)
-1. Open the app. **Briefing**: "Since 08:00, 52 emails arrived. 47 handled.
-   4 need you, about 3 minutes. 2 quick checks."
-2. **What's going on**: one short card per area of the user's life (the kid's
-   class, the current project, the job search, home, bills). Each says what is
-   happening there, what the assistant did ("I answered 4") and how many need
-   the user. Clicking "2 need you" narrows the decision stack to that area.
-3. **Coming up** (right rail): appointments and deadlines picked up from mail,
-   for the next two weeks, each linked to its source email.
-4. Work through the **decision stack**, one focused card at a time:
+Today shows only three things, so it reads in seconds:
+
+1. **Briefing**, in the assistant's voice: "Since 09:00 I handled 18 of 52
+   emails. I answered 4 for Elsa's class and summarised 3 for work. 7 things
+   need you, about 3 minutes."
+2. **Ask box**: questions and search by meaning (see below).
+3. **The one thing that needs you**, as a single focused card with its area.
+   One card at a time:
    - *Reply ready*: a draft written in the user's tone. `Enter` sends, `E`
      edits, `X` don't reply.
    - *Your choice needed*: e.g. a meeting invite with two time options already
@@ -83,8 +82,12 @@ explicitly. Deleting mail is never automatic.
      mail.
    - *Follow up*: "Mark hasn't answered in 5 days. Send a nudge?"
    - *New rule proposal*: "Move Substack newsletters to the digest?"
-5. Answer the **quick checks** (yes/no on uncertain automatic decisions).
-6. **Done**: "You're clear. Next briefing at 13:00."
+   When the decisions are done, the **quick checks** take their place, and
+   then **Done**: "You're clear. Next briefing at 13:00."
+
+Below that, a quiet **Coming up** list shows the next three dates picked up
+from mail. Area details, autonomy suggestions and receipts live on their own
+pages, not on Today.
 
 ### When curious or worried
 - **Handled**: everything done automatically today, grouped by outcome, each
@@ -109,8 +112,8 @@ explicitly. Deleting mail is never automatic.
 
 | Screen | Purpose |
 |---|---|
-| **Today** | Briefing, ask box, a card per life area, decision stack, quick checks, coming up |
-| **What I know** | Areas, what the user told it, people, learned facts with source; correct, forget, or add a new area |
+| **Today** | Briefing, ask box, one decision at a time (then quick checks), next three dates |
+| **What I know** | Each life area: summary, what was handled today, the user's note, people, learned facts with source; correct, forget, or add an area |
 | **Handled** | Receipts of automatic actions, undo, teach |
 | **Digest** | Low-value mail summarised, sender actions |
 | **Tasks** | Mine (from mail, with due dates) and Waiting on others |

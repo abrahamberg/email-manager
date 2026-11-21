@@ -4,7 +4,7 @@ import { lifeEmails } from "./lifeEmails";
 
 export const areas: Area[] = [
   {
-    id: "school", kind: "family", name: "Elsa's school, class 3B",
+    id: "school", shortName: "Elsa's class", kind: "family", name: "Elsa's school, class 3B",
     summary: "The parents' group is organising the Christmas fair on 5 Dec. The class goes to Skansen on 3 Dec and needs your consent and 150 kr by Friday.",
     note: "Elsa has a nut allergy. I drive the swimming carpool on Thursdays in even weeks.",
     people: [
@@ -14,7 +14,7 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "work", kind: "work", name: "Work: Atlas migration",
+    id: "work", shortName: "work", kind: "work", name: "Work: Atlas migration",
     summary: "Cutover moved one week to 7 Dec. Mark still owes the pilot API keys. Anna needs the Q4 table before Monday's board pack.",
     people: [
       { name: "Anna Lind", role: "Finance, board pack" },
@@ -23,7 +23,7 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "jobs", kind: "jobSearch", name: "Job search: staff backend roles",
+    id: "jobs", shortName: "your job search", kind: "jobSearch", name: "Job search: staff backend roles",
     summary: "Two processes are moving: Fabrikam wants an intro call, Nordpay sent a take-home case due 1 Dec. Three new matching roles came in today.",
     note: "Looking for staff or senior backend roles, remote or Stockholm. Java, C# or Kotlin. Not interested in crypto.",
     people: [
@@ -32,12 +32,12 @@ export const areas: Area[] = [
     ],
   },
   {
-    id: "home", kind: "home", name: "Car, home and health",
+    id: "home", shortName: "the car and home", kind: "home", name: "Car, home and health",
     summary: "Winter tires on Tuesday at 13:00. Dentist on Wednesday at 09:30.",
     people: [],
   },
   {
-    id: "admin", kind: "admin", name: "Bills and contracts",
+    id: "admin", shortName: "bills", kind: "admin", name: "Bills and contracts",
     summary: "The Contoso renewal needs a signature by 28 Nov and the price goes up 8%. November's bank statement arrived.",
     people: [],
   },

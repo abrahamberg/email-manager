@@ -39,6 +39,7 @@ export interface AreaPerson {
 // the AI from recent mail; the note is what the user told it directly.
 export interface Area {
   id: string;
+  shortName: string;
   kind: AreaKind;
   name: string;
   summary: string;

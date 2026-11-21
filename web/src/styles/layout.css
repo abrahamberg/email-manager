@@ -65,10 +65,13 @@
     overflow-x: auto;
     z-index: 20;
   }
-  .nav .brand, .nav .ask .kbd, .nav .count { display: none; }
-  .nav a { flex-direction: column; font-size: 12px; padding: 6px 10px; }
+  .nav .brand, .nav .ask .kbd, .nav .count, .nav .nav-group { display: none; }
+  .nav a { flex-direction: column; font-size: 12px; padding: 6px 10px; white-space: nowrap; }
   .nav .ask { margin-top: 0; width: auto; }
   .main { padding: 20px 16px 120px; }
   .notice { bottom: 84px; }
 }
-.main:has(.today-grid) { max-width: 1260px; }
+
+.nav-group { margin: 20px 12px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+
+.nav a.secondary { font-size: 13px; padding-top: 5px; padding-bottom: 5px; }

@@ -15,6 +15,7 @@ export function addArea(data: AppData, name: string, note: string): AppData {
     id: newId("a"),
     kind: "other" as const,
     name: name.trim(),
+    shortName: name.trim(),
     summary: "New. I'll group matching mail here from the next run.",
     note: note.trim() || undefined,
     people: [],
