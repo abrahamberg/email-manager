@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { answerQuestion, type Answer } from "../state/assistant";
+import { api } from "../api";
+import type { Answer } from "../state/assistant";
 import { useAppData } from "../state/StoreProvider";
 
 export const ASK_EXAMPLES = [
@@ -17,7 +18,8 @@ export function useAsk() {
 
   const ask = (text: string) => {
     setQuery(text);
-    setAnswer(text.trim() ? answerQuestion(data, text) : undefined);
+    if (!text.trim()) return setAnswer(undefined);
+    api.ask(text, data).then(setAnswer, () => setAnswer({ text: "Couldn't answer that right now.", matches: [] }));
   };
   const clear = () => {
     setQuery("");

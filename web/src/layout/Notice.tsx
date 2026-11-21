@@ -1,10 +1,10 @@
 import { Button } from "../components/ui";
-import { useStore } from "../state/StoreProvider";
+import { SAVE_FAILED, useStore } from "../state/StoreProvider";
 
 export function Notice() {
   const { state, dispatch } = useStore();
   if (!state.notice) return null;
-  const canUndo = state.past.length > 0 && state.notice !== "Undone";
+  const canUndo = state.past.length > 0 && state.notice !== "Undone" && state.notice !== SAVE_FAILED;
   return (
     <div className="notice" role="status">
       <span>{state.notice}</span>
