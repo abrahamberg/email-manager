@@ -1,7 +1,7 @@
 // The pipeline depends only on these interfaces. main.ts and worker.ts are the
 // only files that pick concrete adapters, so swapping a provider, spam engine
 // or model touches one adapter file and nothing else.
-import type { Category, Outcome, Signal, FactKind } from "@email-manager/shared";
+import type { Category, Outcome, Signal, FactKind, ReplyTopic } from "@email-manager/shared";
 import type { Email } from "./mail/Email";
 import type { Rule } from "./rules/Rule";
 
@@ -109,8 +109,9 @@ export interface Draft {
   confidence: number;
 }
 
+/** Undefined on any failure: the caller then makes no draft rather than a bad one. */
 export interface Drafter {
-  draftReply(email: CompactEmail, context: { userName: string; areaNote?: string }): Promise<Draft>;
+  draftReply(email: CompactEmail, context: { userName: string; areaNote?: string }): Promise<(Draft & { topic: ReplyTopic }) | undefined>;
 }
 
 /** Why: local model in production, a fake in tests; mail text never leaves the cluster. */
