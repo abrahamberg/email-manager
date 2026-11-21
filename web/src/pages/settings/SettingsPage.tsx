@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Settings } from "../../domain/types";
 import { Chip, PageHeader } from "../../components/ui";
 import { useAppData, useStore } from "../../state/StoreProvider";
+import { RepliesSection } from "./RepliesSection";
 import "./settings.css";
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -70,6 +71,7 @@ function MailboxSection({ settings }: { settings: Settings }) {
       <p className="muted small">
         {settings.mailbox.user} on {settings.mailbox.host} over IMAP. Credentials live in a Kubernetes Secret and are never shown here.
       </p>
+      <a href="#setup">Run setup again</a>
     </section>
   );
 }
@@ -81,6 +83,7 @@ export function SettingsPage() {
       <PageHeader title="Settings" />
       <div className="stack">
         <SafetySection settings={settings} />
+        <RepliesSection settings={settings} />
         <RhythmSection settings={settings} />
         <MailboxSection settings={settings} />
       </div>

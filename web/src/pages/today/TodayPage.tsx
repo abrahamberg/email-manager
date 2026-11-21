@@ -1,6 +1,7 @@
 import { DECISION_TITLES } from "../../domain/labels";
 import { plural } from "../../domain/format";
-import { useAppData } from "../../state/StoreProvider";
+import { Button } from "../../components/ui";
+import { useAppData, useStore } from "../../state/StoreProvider";
 import { Briefing } from "./Briefing";
 import { DecisionCard } from "./DecisionCard";
 import { QuickChecks } from "./QuickChecks";
@@ -21,15 +22,27 @@ function UpNext() {
   );
 }
 
+function SnoozedNote({ count, nextBriefing }: { count: number; nextBriefing: string }) {
+  const { dispatch } = useStore();
+  if (count === 0) return null;
+  return (
+    <div className="spread muted small">
+      <span>{plural(count, "snoozed item")}, back at {nextBriefing}</span>
+      <Button size="small" variant="quiet" onClick={() => dispatch({ type: "decision/restoreSnoozed" })}>Bring back now</Button>
+    </div>
+  );
+}
+
 function DoneState({ nextBriefing, snoozed }: { nextBriefing: string; snoozed: number }) {
   return (
     <div className="card done">
       <div className="done-mark" aria-hidden>✓</div>
       <h2>You're clear</h2>
       <p className="muted">
-        Next briefing at {nextBriefing}.{snoozed > 0 && ` ${plural(snoozed, "snoozed item")} will come back then.`}
+        Next briefing at {nextBriefing}.
       </p>
       <a href="#handled">See what I handled</a>
+      {snoozed > 0 && <SnoozedNote count={snoozed} nextBriefing={nextBriefing} />}
     </div>
   );
 }
@@ -53,6 +66,7 @@ export function TodayPage({ shortcutsEnabled }: { shortcutsEnabled: boolean }) {
         </section>
       )}
       <QuickChecks checks={data.quickChecks} receipts={data.receipts} />
+      {!nothingLeft && <SnoozedNote count={data.snoozed.length} nextBriefing={data.briefing.nextBriefing} />}
       {nothingLeft && <DoneState nextBriefing={data.briefing.nextBriefing} snoozed={data.snoozed.length} />}
       <AutonomySuggestions />
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export const ROUTES = ["today", "handled", "digest", "tasks", "delegation", "activity", "preferences"] as const;
+export const ROUTES = ["today", "handled", "digest", "tasks", "delegation", "activity", "preferences", "setup"] as const;
 export type Route = (typeof ROUTES)[number];
 
 function currentRoute(): Route {

@@ -1,0 +1,29 @@
+.overlay.drawer-overlay { justify-content: flex-end; align-items: stretch; padding: 0; }
+.drawer {
+  width: min(560px, 100%);
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: -12px 0 40px rgb(0 0 0 / 0.2);
+}
+.email-body {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.trace { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; border-left: 2px solid var(--border); }
+.trace li { padding-left: 14px; position: relative; }
+.trace li::before { content: ""; position: absolute; left: -6px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+.trace li[data-result="decided"]::before { background: var(--accent); }
+.trace li[data-result="skipped"] { opacity: 0.55; }
+.mono { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.link-button { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.link-button:hover { text-decoration: underline; color: var(--accent); }

@@ -9,10 +9,12 @@ import { TasksPage } from "../pages/tasks/TasksPage";
 import { DelegationPage } from "../pages/delegation/DelegationPage";
 import { ActivityPage } from "../pages/activity/ActivityPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
+import { SetupPage } from "../pages/setup/SetupPage";
 import { Nav } from "./Nav";
 import { CommandBar } from "./CommandBar";
 import { Notice } from "./Notice";
 import { DryRunBanner } from "./DryRunBanner";
+import { EmailViewerProvider, useEmailViewer } from "./EmailViewer";
 
 function Page({ route, shortcutsEnabled }: { route: Route; shortcutsEnabled: boolean }) {
   switch (route) {
@@ -23,26 +25,37 @@ function Page({ route, shortcutsEnabled }: { route: Route; shortcutsEnabled: boo
     case "delegation": return <DelegationPage />;
     case "activity": return <ActivityPage />;
     case "preferences": return <SettingsPage />;
+    case "setup": return <SetupPage />;
   }
 }
 
-export function Shell() {
+function Frame() {
   const route = useHashRoute();
   const { dispatch } = useStore();
   const [asking, setAsking] = useState(false);
+  const viewer = useEmailViewer();
+  const shortcutsEnabled = !asking && !viewer.isOpen;
   const openAsk = () => setAsking(true);
 
-  useShortcuts({ "/": openAsk, "mod+k": openAsk, z: () => dispatch({ type: "store/undo" }) }, !asking);
+  useShortcuts({ "/": openAsk, "mod+k": openAsk, z: () => dispatch({ type: "store/undo" }) }, shortcutsEnabled);
 
   return (
     <div className="shell">
       <Nav route={route} onAsk={openAsk} />
       <main className="main">
         <DryRunBanner />
-        <Page route={route} shortcutsEnabled={!asking} />
+        <Page route={route} shortcutsEnabled={shortcutsEnabled} />
       </main>
       {asking && <CommandBar onClose={() => setAsking(false)} />}
       <Notice />
     </div>
+  );
+}
+
+export function Shell() {
+  return (
+    <EmailViewerProvider>
+      <Frame />
+    </EmailViewerProvider>
   );
 }

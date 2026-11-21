@@ -7,6 +7,7 @@ import { useShortcuts, type ShortcutMap } from "../../hooks/useShortcuts";
 import { useStore } from "../../state/StoreProvider";
 import type { DecisionEdit } from "../../state/actions";
 import { DecisionBody } from "./DecisionBody";
+import { useEmailViewer } from "../../layout/EmailViewer";
 import { labelsFor } from "./decisionActions";
 
 function optionShortcuts(decision: Decision, setOption: (index: number) => void): ShortcutMap {
@@ -16,9 +17,9 @@ function optionShortcuts(decision: Decision, setOption: (index: number) => void)
 
 export function DecisionCard({ decision, shortcutsEnabled }: { decision: Decision; shortcutsEnabled: boolean }) {
   const { state, dispatch } = useStore();
+  const { open } = useEmailViewer();
   const [edit, setEdit] = useState<DecisionEdit>({});
   const [editing, setEditing] = useState(false);
-  const [showOriginal, setShowOriginal] = useState(false);
   const optionIndex = edit.optionIndex ?? (decision.kind === "choice" ? decision.recommended : 0);
   const labels = labelsFor(decision, optionIndex);
 
@@ -30,6 +31,7 @@ export function DecisionCard({ decision, shortcutsEnabled }: { decision: Decisio
     Enter: accept,
     x: dismiss,
     s: snooze,
+    o: () => open(decision.email.id),
     ...(labels.canEdit ? { e: () => setEditing(true) } : {}),
     ...optionShortcuts(decision, (index) => setEdit((current) => ({ ...current, optionIndex: index }))),
   };
@@ -41,11 +43,9 @@ export function DecisionCard({ decision, shortcutsEnabled }: { decision: Decisio
       <header className="stack">
         <div className="spread">
           <span className="section-title">{DECISION_TITLES[decision.kind]}</span>
-          <button type="button" className="button quiet small" onClick={() => setShowOriginal(!showOriginal)}>
-            {showOriginal ? "Hide email" : "Show email"}
-          </button>
+          <Button variant="quiet" size="small" onClick={() => open(decision.email.id)} shortcut="O">Open email</Button>
         </div>
-        <EmailMeta email={decision.email} showSnippet={showOriginal} />
+        <EmailMeta email={decision.email} />
         <p className="why">{decision.why}</p>
       </header>
 

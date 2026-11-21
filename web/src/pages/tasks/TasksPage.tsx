@@ -1,6 +1,7 @@
 import type { Task } from "../../domain/types";
 import { formatDay } from "../../domain/format";
 import { Empty, PageHeader } from "../../components/ui";
+import { EmailLink } from "../../components/EmailMeta";
 import { useAppData, useStore } from "../../state/StoreProvider";
 import "./tasks.css";
 
@@ -17,7 +18,7 @@ function TaskRow({ task }: { task: Task }) {
       <div className="stack-tight">
         <span className="title">{task.title}</span>
         <span className="muted small">
-          From {task.email.from.name}: {task.email.subject}
+          From {task.email.from.name}: <EmailLink email={task.email} />
           {task.due && ` · due ${formatDay(task.due)}`}
         </span>
       </div>

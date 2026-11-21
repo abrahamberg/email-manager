@@ -53,3 +53,7 @@ export function snoozeDecision(data: AppData, id: string): AppData {
   const decision = findDecision(data, id);
   return decision ? { ...withoutDecision(data, id), snoozed: [...data.snoozed, decision] } : data;
 }
+
+export function restoreSnoozed(data: AppData): AppData {
+  return data.snoozed.length === 0 ? data : { ...data, decisions: [...data.decisions, ...data.snoozed], snoozed: [] };
+}

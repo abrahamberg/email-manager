@@ -3,6 +3,7 @@ import { OUTCOME_LABELS, SIGNAL_LABELS } from "../../domain/labels";
 import { formatTime } from "../../domain/format";
 import { Button, Chip, type ChipTone } from "../../components/ui";
 import { Confidence } from "../../components/Confidence";
+import { EmailLink } from "../../components/EmailMeta";
 import { useStore } from "../../state/StoreProvider";
 
 const OUTCOME_TONES: Record<Receipt["outcome"], ChipTone> = {
@@ -40,7 +41,7 @@ export function ReceiptRow({ receipt }: { receipt: Receipt }) {
           <span className="sender">{receipt.email.from.name}</span>
           <span className="muted small">{formatTime(receipt.at)}</span>
         </div>
-        <p className="subject">{receipt.email.subject}</p>
+        <EmailLink email={receipt.email} />
         <p className="muted small">
           {receipt.byUser ? receipt.reason : `${SIGNAL_LABELS[receipt.signal]}: ${receipt.reason}`}
         </p>

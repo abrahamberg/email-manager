@@ -27,6 +27,32 @@ export interface EmailRef {
   category: Category;
 }
 
+export type AuthVerdict = "pass" | "fail" | "none";
+
+export interface AuthResults {
+  spf: AuthVerdict;
+  dkim: AuthVerdict;
+  dmarc: AuthVerdict;
+}
+
+export type PipelineStage = "rules" | "spam" | "lowValue" | "ai";
+
+export interface TraceStep {
+  stage: PipelineStage;
+  result: "passed" | "decided" | "skipped";
+  note: string;
+  tokens?: number;
+}
+
+export interface EmailDetail {
+  body: string;
+  to: string;
+  auth: AuthResults;
+  spamScore: number;
+  bulkHeaders: string[];
+  trace: TraceStep[];
+}
+
 export interface ChoiceOption {
   label: string;
   detail: string;
@@ -98,9 +124,26 @@ export interface CategoryPolicy {
 
 export type RuleSourceKind = "feed" | "user" | "ai";
 
+export type RuleField = "from" | "subject" | "body" | "category" | "listId";
+export type RuleOperator = "contains" | "endsWith" | "is";
+export type RuleActionKind = "junk" | "digest" | "archive" | "label" | "alwaysShow" | "task";
+
+export interface RuleCondition {
+  field: RuleField;
+  operator: RuleOperator;
+  value: string;
+}
+
+export interface RuleAction {
+  kind: RuleActionKind;
+  label?: string;
+}
+
 export interface Rule {
   id: string;
   text: string;
+  when?: RuleCondition[];
+  then?: RuleAction;
   source: RuleSourceKind;
   status: "active" | "proposed" | "disabled";
   hits: number;
@@ -128,14 +171,33 @@ export interface Run {
   error?: string;
 }
 
+export type ReplyTopic = "acknowledge" | "confirmAppointment" | "schedule" | "declinePolitely" | "shareKnownInfo";
+
+export interface ReplyPolicy {
+  signature: string;
+  knownContactsOnly: boolean;
+  topics: ReplyTopic[];
+  neverAutoReplyTo: string[];
+}
+
 export interface Settings {
   dryRun: boolean;
+  replies: ReplyPolicy;
   mailbox: { host: string; user: string; connected: boolean };
   dailySendCap: number;
   quietHours: { from: string; to: string };
   briefingTimes: string[];
   aiDailyBudgetUsd: number;
   scheduleMinutes: number;
+}
+
+export interface MailboxProfile {
+  daysRead: number;
+  emailsRead: number;
+  peopleYouReplyTo: number;
+  newsletters: number;
+  toneSummary: string;
+  wouldHaveDone: { outcome: Outcome; count: number }[];
 }
 
 export interface Briefing {
@@ -146,6 +208,8 @@ export interface Briefing {
 
 export interface AppData {
   briefing: Briefing;
+  details: Record<string, EmailDetail>;
+  profile: MailboxProfile;
   decisions: Decision[];
   snoozed: Decision[];
   quickChecks: QuickCheck[];

@@ -1,4 +1,5 @@
-import type { AutonomyLevel, Category, DigestGroup, Rule, Settings } from "../domain/types";
+import type { PresetName } from "../domain/autonomy";
+import type { AutonomyLevel, Category, DigestGroup, Rule, RuleAction, RuleCondition, Settings } from "../domain/types";
 
 export interface DecisionEdit {
   text?: string;
@@ -11,6 +12,7 @@ export type Action =
   | { type: "decision/accept"; id: string; edit?: DecisionEdit }
   | { type: "decision/dismiss"; id: string }
   | { type: "decision/snooze"; id: string }
+  | { type: "decision/restoreSnoozed" }
   | { type: "quickCheck/answer"; id: string; correct: boolean }
   | { type: "receipt/undo"; id: string }
   | { type: "receipt/teach"; id: string; always: boolean }
@@ -18,5 +20,7 @@ export type Action =
   | { type: "digest/unsubscribeCategory"; category: Category }
   | { type: "task/toggle"; id: string }
   | { type: "policy/setLevel"; category: Category; level: AutonomyLevel }
+  | { type: "policy/applyPreset"; preset: PresetName }
   | { type: "rule/setStatus"; id: string; status: Rule["status"] }
+  | { type: "rule/save"; id?: string; when: RuleCondition[]; then: RuleAction }
   | { type: "settings/update"; patch: Partial<Settings> };

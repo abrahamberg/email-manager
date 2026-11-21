@@ -1,5 +1,5 @@
 import type { AppData } from "../domain/types";
-import { AUTONOMY_LABELS } from "../domain/autonomy";
+import { AUTONOMY_LABELS, PRESETS } from "../domain/autonomy";
 import type { Action } from "./actions";
 
 function senderOfDecision(data: AppData, id: string): string {
@@ -11,6 +11,7 @@ export function describeAction(before: AppData, action: Action): string {
     case "decision/accept": return `Done for ${senderOfDecision(before, action.id)}`;
     case "decision/dismiss": return "Dismissed";
     case "decision/snooze": return `Snoozed until ${before.briefing.nextBriefing}`;
+    case "decision/restoreSnoozed": return "Snoozed items are back";
     case "quickCheck/answer": return action.correct ? "Thanks, noted" : "Undone. I proposed a rule so it won't happen again";
     case "receipt/undo": return "Undone";
     case "receipt/teach": return action.always ? "Rule added" : "Undone and rule added";
@@ -18,7 +19,9 @@ export function describeAction(before: AppData, action: Action): string {
     case "digest/unsubscribeCategory": return `Unsubscribed from all ${action.category} senders`;
     case "task/toggle": return "Task updated";
     case "policy/setLevel": return `Set to ${AUTONOMY_LABELS[action.level]}`;
+    case "policy/applyPreset": return `Started with ${PRESETS[action.preset].label}`;
     case "rule/setStatus": return `Rule ${action.status}`;
+    case "rule/save": return action.id ? "Rule updated" : "Rule added";
     case "settings/update": return "Settings saved";
   }
 }

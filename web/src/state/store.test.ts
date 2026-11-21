@@ -94,3 +94,33 @@ describe("command bar", () => {
     expect(answer.matches.map((email) => email.from.name)).toContain("Anna Lind");
   });
 });
+
+describe("snooze and rules", () => {
+  it("brings snoozed decisions back", () => {
+    const reply = decision(initial.data, "reply");
+    const { data } = run(initial, { type: "decision/snooze", id: reply.id }, { type: "decision/restoreSnoozed" });
+    expect(data.snoozed).toHaveLength(0);
+    expect(data.decisions).toContainEqual(reply);
+  });
+
+  it("saves a new rule with a plain-language description", () => {
+    const { data } = run(initial, {
+      type: "rule/save",
+      when: [{ field: "from", operator: "endsWith", value: "@substack.com" }],
+      then: { kind: "digest" },
+    });
+    expect(data.rules[0]).toMatchObject({ status: "active", source: "user", text: "When sender ends with “@substack.com”: move to the digest" });
+  });
+
+  it("edits an existing rule in place", () => {
+    const rule = initial.data.rules.find((item) => item.when)!;
+    const { data } = run(initial, { type: "rule/save", id: rule.id, when: rule.when!, then: { kind: "archive" } });
+    expect(data.rules.find((item) => item.id === rule.id)?.then).toEqual({ kind: "archive" });
+    expect(data.rules).toHaveLength(initial.data.rules.length);
+  });
+
+  it("applies a starting preset without ever letting replies go out on their own", () => {
+    const { data } = run(initial, { type: "policy/applyPreset", preset: "handsOff" });
+    for (const policy of data.policies.filter((item) => item.sendsMail)) expect(policy.level).toBe("suggest");
+  });
+});

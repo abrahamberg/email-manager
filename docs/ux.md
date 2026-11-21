@@ -102,13 +102,37 @@ explicitly. Deleting mail is never automatic.
 | **Delegation** | Autonomy per category, rules, AI proposals, rule sources |
 | **Activity** | Runs, counts, tokens and cost, errors |
 | **Settings** | Mailbox, dry-run, send limits, quiet hours, AI budget |
+| **Set up** | Connect, learn from 30 days read-only, a watch week, a starting preset |
+| Email drawer | Any email in full, with the step-by-step trace of how it was decided |
 | Command bar | Plain-language questions and actions, from any screen |
 
-## 6. Keyboard
+## 6. How correctness is backed
+
+"Do as little as possible" only works if the user can trust what happened.
+Every place in the panel answers *why*:
+
+- **Decision trace.** Opening any email shows the four pipeline steps (your
+  rules, spam check, bulk and repeat check, AI), which one decided, what it
+  saw, and how many tokens the AI used. "Decided without AI, at no cost" is
+  shown when that's the case.
+- **Sender checks.** SPF, DKIM and DMARC verdicts and the spam score.
+- **Rules preview.** While writing a rule, the editor shows which of today's
+  emails it would catch, so a rule is tested before it runs. Rules are saved
+  as conditions and shown as one plain sentence.
+- **Reply limits.** Replies sent without asking are limited to topics the
+  user ticks (for example "confirm appointments that match my calendar"), to
+  people they have written to before, never to listed domains, under a daily
+  cap and outside quiet hours.
+- **Presets never send.** Even "Hands-off" keeps replies at Suggest. Sending on
+  its own is only ever a choice the user makes per category.
+
+## 7. Keyboard
 
 | Key | Action |
 |---|---|
 | `Enter` | Do the recommended action |
+| `O` | Open the email in full |
+| `1`–`3` | Pick an option on a choice card |
 | `E` | Edit (draft or task) |
 | `S` | Snooze until next briefing |
 | `X` | Dismiss / don't do it |

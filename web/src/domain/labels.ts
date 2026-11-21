@@ -1,4 +1,4 @@
-import type { DecisionKind, Outcome, RuleSourceKind, Signal } from "./types";
+import type { DecisionKind, Outcome, ReplyTopic, RuleSourceKind, Signal } from "./types";
 
 export const OUTCOME_LABELS: Record<Outcome, string> = {
   replied: "Replied",
@@ -28,4 +28,12 @@ export const RULE_SOURCE_LABELS: Record<RuleSourceKind, string> = {
   feed: "Trusted feed",
   user: "You",
   ai: "Learned by AI",
+};
+
+export const REPLY_TOPIC_LABELS: Record<ReplyTopic, string> = {
+  acknowledge: "Confirm I received something",
+  confirmAppointment: "Confirm appointments that match my calendar",
+  schedule: "Propose meeting times from my calendar",
+  declinePolitely: "Politely decline sales and recruiter mail",
+  shareKnownInfo: "Answer with facts I've already shared before",
 };

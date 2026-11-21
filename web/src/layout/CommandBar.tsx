@@ -5,7 +5,7 @@ import { useShortcuts } from "../hooks/useShortcuts";
 import { answerQuery, type CommandAnswer } from "../state/commandBar";
 import { useStore } from "../state/StoreProvider";
 
-const EXAMPLES = ["What did the bank send?", "Unsubscribe from all marketing", "Anything from Anna?", "Pause everything"];
+const EXAMPLES = ["What needs me?", "What did the bank send?", "Anything about Rust?", "Unsubscribe from all marketing", "Pause everything"];
 
 function Answer({ answer, onDone }: { answer: CommandAnswer; onDone: () => void }) {
   const { dispatch } = useStore();

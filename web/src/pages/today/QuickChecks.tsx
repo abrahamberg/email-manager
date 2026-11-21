@@ -2,6 +2,7 @@ import type { QuickCheck, Receipt } from "../../domain/types";
 import { SIGNAL_LABELS } from "../../domain/labels";
 import { Button } from "../../components/ui";
 import { Confidence } from "../../components/Confidence";
+import { EmailLink } from "../../components/EmailMeta";
 import { useStore } from "../../state/StoreProvider";
 
 function QuickCheckRow({ check, receipt }: { check: QuickCheck; receipt: Receipt }) {
@@ -12,7 +13,7 @@ function QuickCheckRow({ check, receipt }: { check: QuickCheck; receipt: Receipt
       <div className="stack-tight">
         <p>{check.question}</p>
         <p className="muted small">
-          {receipt.email.from.name}: “{receipt.email.subject}” · {SIGNAL_LABELS[receipt.signal]} · <Confidence value={receipt.confidence} />
+          {receipt.email.from.name}: <EmailLink email={receipt.email} /> · {SIGNAL_LABELS[receipt.signal]} · <Confidence value={receipt.confidence} />
         </p>
       </div>
       <div className="row">

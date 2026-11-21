@@ -1,0 +1,11 @@
+.stepper { list-style: none; margin: 0 0 20px; padding: 0; display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: 14px; color: var(--text-muted); }
+.stepper li { display: flex; align-items: center; gap: 8px; }
+.stepper .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; border: 1px solid var(--border); }
+.stepper li[data-state="current"] { color: var(--text); font-weight: 600; }
+.stepper li[data-state="current"] .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.stepper li[data-state="done"] .dot { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+
+.setup-step { padding: 24px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.facts { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }

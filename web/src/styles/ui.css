@@ -82,3 +82,24 @@
 
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .switch input { width: auto; }
+
+.choices { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.choices legend { margin-bottom: 8px; }
+.choice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+.choice[data-selected="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.choice input { width: auto; margin: 0; }
+.block { display: block; }
+.task-preview { display: flex; flex-direction: column; gap: 4px; background: var(--surface-muted); border-radius: var(--radius-small); padding: 14px 16px; }
+.list { list-style: none; margin: 0; padding: 0; }
+.list > li { padding: 14px 18px; }
+.list > li + li { border-top: 1px solid var(--border); }
+.stack-tight { display: flex; flex-direction: column; gap: 2px; }

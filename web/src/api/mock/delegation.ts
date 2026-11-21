@@ -11,12 +11,12 @@ export const policies: CategoryPolicy[] = [
 ];
 
 export const rules: Rule[] = [
-  { id: "r1", text: "Newsletters from substack.com go to the digest", source: "user", status: "active", hits: 64 },
-  { id: "r2", text: "Bank statements are labelled Finance and archived", source: "user", status: "active", hits: 11 },
+  { id: "r1", text: "Newsletters from substack.com go to the digest", when: [{ field: "from", operator: "endsWith", value: "@substack.com" }], then: { kind: "digest" }, source: "user", status: "active", hits: 64 },
+  { id: "r2", text: "Bank statements are labelled Finance and archived", when: [{ field: "from", operator: "endsWith", value: "contosobank.example" }, { field: "subject", operator: "contains", value: "statement" }], then: { kind: "label", label: "Finance" }, source: "user", status: "active", hits: 11 },
   { id: "r3", text: "Passing CI builds are archived, failing builds stay in the inbox", source: "ai", status: "active", hits: 140 },
   { id: "r4", text: "Mail that fails DMARC from a look-alike domain goes to Junk", source: "feed", status: "active", hits: 23 },
   { id: "r5", text: "Mail linking to a URLhaus-listed domain goes to Junk", source: "feed", status: "active", hits: 4 },
-  { id: "r6", text: "Anything from my accountant always reaches me", source: "user", status: "active", hits: 3 },
+  { id: "r6", text: "Anything from my accountant always reaches me", when: [{ field: "from", operator: "is", value: "eva@ledger.example" }], then: { kind: "alwaysShow" }, source: "user", status: "active", hits: 3 },
   { id: "r-ai-1", text: "Unsolicited recruiter emails go to the digest", source: "ai", status: "proposed", hits: 0 },
   { id: "r-ai-2", text: "Calendar acceptances (\"Accepted: …\") are archived", source: "ai", status: "proposed", hits: 0 },
   { id: "r7", text: "Shipping updates are labelled Orders", source: "user", status: "disabled", hits: 18 },
