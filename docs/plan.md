@@ -11,8 +11,8 @@ session far below the 250k limit and avoids paying to reload context.
 
 - **Contracts, not conversation.** Tasks hand off through small typed files:
   `shared/src/types.ts` (the API shapes the panel already uses) and
-  `server/src/ports.ts` (interfaces such as `Mailbox`, `Classifier` and
-  `Embedder`). A task reads the contracts plus its own inputs. It does not read
+  `server/src/ports.ts` (interfaces such as `Mailbox`, `MailAuth`,
+  `Classifier` and `Embedder`). A task reads the contracts plus its own inputs. It does not read
   other tasks' code.
 - **One CLAUDE.md** at the repo root holds the code rules, commands and commit
   format. It loads automatically, so the rules are never repeated in prompts.
@@ -91,12 +91,36 @@ These tasks only need T0, so most of them can run in parallel.
 - Done: the repos are tested on an in-memory `node:sqlite`. Bodies are never
   stored, only headers, compact text and summaries.
 
+**Providers (decided):** generic IMAP/SMTP, Office 365 and Gmail are all
+supported through one IMAP adapter and one SMTP sender. Only sign-in differs:
+a password (or app password) for generic servers, and OAuth2 (XOAUTH2) for
+Office 365 and Gmail, since Microsoft no longer accepts passwords for Exchange
+Online IMAP and SMTP.
+
 **T9 · O · IMAP adapter**
-- Reads: `CLAUDE.md`, `ports.ts` (Mailbox), `Email.ts`.
+- Reads: `CLAUDE.md`, `ports.ts` (Mailbox, MailAuth), `Email.ts`.
 - Touches: `server/src/mail/imapMailbox.ts`, `server/test/imap.int.test.ts`.
 - Done: a GreenMail integration test in CI covers fetching since the last UID,
   a UIDVALIDITY change, moving to Junk, labelling, and appending a draft. Every
-  operation is idempotent on retry.
+  operation is idempotent on retry. Sign-in comes from a `MailAuth` port, so
+  the adapter doesn't know which provider it talks to.
+
+**T9b · O · OAuth2 sign-in for Office 365 and Gmail (security)**
+- Reads: `CLAUDE.md`, `ports.ts` (MailAuth), `config.ts`.
+- Touches: `server/src/mail/auth/passwordAuth.ts`, `oauthAuth.ts`,
+  `providers.ts` (host, port and scopes for Office 365 and Gmail),
+  `routes/connect.ts`.
+- Done: an authorization-code flow with PKCE starts from the panel's Set up
+  step. The refresh token is stored encrypted, using a key from the Kubernetes
+  Secret, and refreshed before it expires. Scopes are limited to IMAP and SMTP.
+  Tests use a fake token endpoint and cover expiry, revocation and a wrong
+  `state`.
+
+**T9c · S · SMTP sender**
+- Reads: `CLAUDE.md`, `ports.ts` (ReplySender, MailAuth).
+- Touches: `server/src/mail/smtpSender.ts` (nodemailer, XOAUTH2 or password).
+- Done: tests against GreenMail SMTP. It's used only once auto-send is turned
+  on, because v1 saves drafts over IMAP.
 
 **T10 · O · Pipeline**
 - Reads: `CLAUDE.md`, `ports.ts`, design §3.1.
@@ -205,8 +229,10 @@ for every message.
 - Done: one route per action group, with zod-validated bodies and tests.
 
 **T24 · S · Real setup flow**
-- Reads: `CLAUDE.md`, `web/src/pages/setup/*`, `routes/runs.ts`.
-- Done: "Test connection" and "Learn from 30 days" (read-only) work against
+- Reads: `CLAUDE.md`, `web/src/pages/setup/*`, `routes/runs.ts`, `routes/connect.ts`.
+- Done: Set up offers three choices: Office 365, Gmail, or another IMAP/SMTP
+  server. The first two sign in with OAuth, the third with host, port and
+  password. "Test connection" and "Learn from 30 days" (read-only) work against
   the server.
 
 **T25 · O · Security and code review**
@@ -216,14 +242,15 @@ for every message.
 ## Order and parallelism
 
 ```
-T0 → { T1, T2, T3, T4, T8 } → { T5, T6, T7, T9 } → T10 → T11 → T12   (milestone 1)
+T0 → { T1, T2, T3, T4, T8 } → { T5, T6, T7, T9 } → T9b → T10 → T11 → T12   (milestone 1)
+T9 → T9c
 T13 → T14 → { T15, T16 } → { T17, T18 } ; T13 → T19 ; T8 → { T20, T21 }
 { T20, T21, T11 } → T22 → T23 → T24 → T25
 ```
 
-By count, 15 of the 26 tasks are Sonnet and 11 are Opus. The Opus tasks are
+By count, 16 of the 28 tasks are Sonnet and 12 are Opus. The Opus tasks are
 the ones where a mistake is costly: contracts, the store schema, IMAP state,
-the pipeline, auth, feeds, AI safety and matter grouping.
+OAuth tokens, the pipeline, auth, feeds, AI safety and matter grouping.
 
 ## Keeping token use low
 
@@ -239,6 +266,6 @@ the pipeline, auth, feeds, AI safety and matter grouping.
 
 ## Progress
 
-- [ ] T0 · [ ] T1 · [ ] T2 · [ ] T3 · [ ] T4 · [ ] T5 · [ ] T6 · [ ] T7 · [ ] T8 · [ ] T9 · [ ] T10 · [ ] T11 · [ ] T12
+- [ ] T0 · [ ] T1 · [ ] T2 · [ ] T3 · [ ] T4 · [ ] T5 · [ ] T6 · [ ] T7 · [ ] T8 · [ ] T9 · [ ] T9b · [ ] T9c · [ ] T10 · [ ] T11 · [ ] T12
 - [ ] T13 · [ ] T14 · [ ] T15 · [ ] T16 · [ ] T17 · [ ] T18 · [ ] T19 · [ ] T20 · [ ] T21
 - [ ] T22 · [ ] T23 · [ ] T24 · [ ] T25

@@ -311,8 +311,9 @@ email-manager/
 
 ## 7. Open questions
 
-1. Which mail provider(s)? Gmail and Outlook need an app password or OAuth
-   (XOAUTH2), which changes the auth adapter.
+1. ~~Which mail provider(s)?~~ **Decided:** all of them. Generic IMAP/SMTP
+   with a password, plus Office 365 and Gmail over OAuth2 (XOAUTH2), behind one
+   `MailAuth` port (plan tasks T9, T9b, T9c).
 2. Is running Rspamd as a sidecar fine, or do you prefer the built-in fallback
    only?
 3. Agree that v1 is drafts-only, with auto-send later?
