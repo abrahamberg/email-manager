@@ -3,7 +3,8 @@ import type { Db } from "../../store/db";
 
 export interface ReceiptRef { messageId: string; uid: number; outcome: Outcome }
 
-const MOVES_BACK = new Set<Outcome>(["junk", "digest", "archived"]);
+/** Where each outcome put the message, so undo knows which folder to look in. */
+const MOVED_TO: Partial<Record<Outcome, "junk" | "archive">> = { junk: "junk", digest: "archive", archived: "archive" };
 
 /** Receipt ids are `rc-<messageId>-<outcome>`, the same shape the report builds. */
 export async function findReceipt(db: Db, id: string): Promise<ReceiptRef | undefined> {
@@ -23,7 +24,9 @@ export async function markUndone(db: Db, id: string, taught?: string): Promise<v
 
 /** Only queues the move; executing it is the next pipeline run's job. */
 export async function queueMoveToInbox(db: Db, r: ReceiptRef): Promise<void> {
-  if (!MOVES_BACK.has(r.outcome)) return;
+  const from = MOVED_TO[r.outcome];
+  if (!from) return;
   await db.query(
-    "INSERT INTO pending_mailbox_actions (message_id, uid, action) VALUES ($1, $2, 'move_to_inbox')", [r.messageId, r.uid]);
+    "INSERT INTO pending_mailbox_actions (message_id, uid, action, from_folder) VALUES ($1, $2, 'move_to_inbox', $3)",
+    [r.messageId, r.uid, from]);
 }

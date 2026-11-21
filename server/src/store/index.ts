@@ -8,6 +8,7 @@ import { factRepo } from "./facts";
 import { matterRepo } from "./matters";
 import { messageRepo } from "./messages";
 import { outcomeRepo } from "./outcomes";
+import { pendingActionRepo } from "./pendingActions";
 import { policyRepo } from "./policies";
 import { quickCheckRepo } from "./quickChecks";
 import { ruleRepo } from "./rules";
@@ -34,6 +35,7 @@ export function createStore(db: Db) {
     matters: matterRepo(db),
     messages: messageRepo(db),
     outcomes: outcomeRepo(db),
+    pendingActions: pendingActionRepo(db),
     policies: policyRepo(db),
     quickChecks: quickCheckRepo(db),
     rules: ruleRepo(db),

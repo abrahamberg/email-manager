@@ -67,6 +67,14 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
       await c.messageMove(String(uid), f[folder], { uid: true });
     },
 
+    async moveToInbox(messageId, from) {
+      if (!messageId.trim()) return false;
+      const c = await connection();
+      const found = await findByMessageId(c.client, c.folders[from], messageId);
+      for (const uid of found) await c.client.messageMove(String(uid), c.folders.inbox, { uid: true });
+      return found.length > 0;
+    },
+
     async addLabel(uid, label) {
       const { client: c } = await inbox();
       if (!(await existing(c, uid))) return;
@@ -106,9 +114,13 @@ function headerValue(rfc822: string, name: string): string | undefined {
   return match?.[1]?.trim();
 }
 
+async function findByMessageId(c: ImapClient, folder: string, messageId: string): Promise<number[]> {
+  await c.mailboxOpen(folder);
+  const found = await c.search({ header: { "message-id": messageId } }, { uid: true });
+  return Array.isArray(found) ? found : [];
+}
+
 // Why: append has no natural idempotency, so a retried append is detected by Message-ID.
 async function draftExists(c: ImapClient, drafts: string, messageId: string): Promise<boolean> {
-  await c.mailboxOpen(drafts);
-  const found = await c.search({ header: { "message-id": messageId } }, { uid: true });
-  return Array.isArray(found) && found.length > 0;
+  return (await findByMessageId(c, drafts, messageId)).length > 0;
 }

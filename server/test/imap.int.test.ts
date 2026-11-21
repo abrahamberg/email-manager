@@ -72,6 +72,14 @@ describe.skipIf(!host)("imapMailbox against GreenMail", () => {
     expect(await inFolder(c, "Junk", `<${run}-1@test>`)).toHaveLength(1);
   });
 
+  it("moves a message back from Junk by Message-ID, and a retry finds nothing", async () => {
+    const id = `<${run}-1@test>`;
+    expect(await mailbox.moveToInbox(id, "junk")).toBe(true);
+    expect(await mailbox.moveToInbox(id, "junk")).toBe(false);
+    expect(await inFolder(c, "Junk", id)).toHaveLength(0);
+    expect(await inFolder(c, folder, id)).toHaveLength(1);
+  });
+
   it("appends a draft once with Draft and Seen flags", async () => {
     const draft = `Message-ID: <${run}-draft@test>\r\nSubject: re\r\n\r\nhi\r\n`;
     await mailbox.appendDraft(draft);

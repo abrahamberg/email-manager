@@ -22,6 +22,8 @@ export interface Mailbox {
   open(): Promise<MailboxState>;
   fetchSince(uid: number): AsyncIterable<RawMessage>;
   moveTo(uid: number, folder: "junk" | "archive"): Promise<void>;
+  /** Moves a message back by its Message-ID header; false when no such message is in that folder. */
+  moveToInbox(messageId: string, from: "junk" | "archive"): Promise<boolean>;
   addLabel(uid: number, label: string): Promise<void>;
   appendDraft(rfc822: string): Promise<void>;
   close(): Promise<void>;

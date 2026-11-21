@@ -27,6 +27,7 @@ export function buildRunDeps(config: Config, db: Db, store: Store, over: RunOver
     mailbox: mailboxFromConfig(config, auth),
     cursor: store.cursor,
     outcomes: store.outcomes,
+    pendingActions: store.pendingActions,
     rules: store.rules,
     senders: store.senders,
     spamCheck: config.RSPAMD_URL ? rspamdCheck(config.RSPAMD_URL) : noSpamEngine,

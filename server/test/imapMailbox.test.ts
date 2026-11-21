@@ -136,6 +136,18 @@ describe("imapMailbox", () => {
     expect(await collect(mailbox.fetchSince(0))).toEqual([1]);
   });
 
+  it("moves a message back to INBOX by Message-ID, and reports when it is not there", async () => {
+    const junk = { ...inboxWith(0), specialUse: "\\Junk" };
+    junk.messages.set(junk.uidNext++, { source: Buffer.from("Message-ID: <back@x>\r\n\r\nx"), flags: new Set() });
+    const boxes = { INBOX: inboxWith(1), Spam: junk };
+    const { mailbox } = setup(boxes);
+    expect(await mailbox.moveToInbox("<back@x>", "junk")).toBe(true);
+    expect(await mailbox.moveToInbox("<back@x>", "junk")).toBe(false);
+    expect(await mailbox.moveToInbox(" ", "junk")).toBe(false);
+    expect(boxes.Spam.messages.size).toBe(0);
+    expect(await collect(mailbox.fetchSince(0))).toEqual([1, 2]);
+  });
+
   it("asks MailAuth for credentials on each connect, using XOAUTH2 tokens", async () => {
     let n = 0;
     const oauth: MailAuth = { credentials: async () => ({ kind: "oauth", user: "u", accessToken: `t${++n}` }) };

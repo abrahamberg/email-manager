@@ -22,6 +22,7 @@ export function fakeMailbox(state: MailboxState, messages: RawMessage[]) {
       for (const m of messages) if (m.uid > uid) yield m;
     },
     moveTo: async (uid, folder) => void calls.push(`move ${uid} ${folder}`),
+    moveToInbox: async (id, from) => (calls.push(`move ${id} from ${from} to inbox`), true),
     addLabel: async (uid, label) => void calls.push(`label ${uid} ${label}`),
     appendDraft: async () => void calls.push("draft"),
     close: async () => void calls.push("close"),

@@ -66,7 +66,7 @@ describe("checkConnection", () => {
 
 describe("readOnly", () => {
   it("exposes no way to change the mailbox", () => {
-    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
+    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, moveToInbox: async () => false, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
     expect(Object.keys(readOnly(full)).sort()).toEqual(["close", "fetchSince", "open"]);
   });
 });

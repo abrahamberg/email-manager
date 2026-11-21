@@ -9,6 +9,7 @@ import type {
 import type { Rule } from "../rules/Rule";
 import { prepareLife, type LifeDeps, type LifeRun } from "./lifeDeps";
 import { processEmail } from "./processEmail";
+import { runPendingActions, type PendingActionQueue } from "./pendingActions";
 import { startAfter } from "./startPoint";
 
 export interface RunRecorder {
@@ -28,6 +29,8 @@ export interface RunDeps {
   dryRun: boolean;
   classifier?: Classifier;
   life?: LifeDeps;
+  /** Panel actions (undo) to carry out before new mail is read. */
+  pendingActions?: PendingActionQueue;
   /** AI spend so far in this run, stored on the run row so the daily budget sees it. */
   aiCostUsd?: () => number;
   /** Runs inside the lock before any mail is read (migrations). */
@@ -58,6 +61,7 @@ async function runLocked(deps: RunDeps): Promise<RunResult> {
   let aborted = false;
   try {
     await deps.prepare?.();
+    await carryOutPending(deps, tally);
     await processMailbox(deps, tally);
   } catch (err) {
     aborted = true;
@@ -68,6 +72,16 @@ async function runLocked(deps: RunDeps): Promise<RunResult> {
   const run = toRun(started, deps.clock.now(), tally, deps.aiCostUsd?.() ?? 0);
   await deps.runs.save(run);
   return { run, aborted };
+}
+
+/** Skipped in dry-run, so the actions wait for a live run. A failure here never stops new mail. */
+async function carryOutPending(deps: RunDeps, tally: Tally): Promise<void> {
+  if (deps.dryRun || !deps.pendingActions) return;
+  try {
+    tally.errors.push(...(await runPendingActions(deps.pendingActions, deps.mailbox)));
+  } catch (err) {
+    tally.errors.push(`pending actions: ${errorText(err)}`);
+  }
 }
 
 async function processMailbox(deps: RunDeps, tally: Tally): Promise<void> {
