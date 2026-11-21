@@ -8,6 +8,7 @@ import { createStore, migrate, postgresDb, type Store } from "./store";
 import { buildRunDeps } from "./wiring/buildRunDeps";
 import { localEmbedder } from "./search/localEmbedder";
 import { vectorSearch } from "./search/vectorSearch";
+import { setupDeps } from "./wiring/setupDeps";
 import { tokenStoreAdapter } from "./wiring/tokenStoreAdapter";
 
 const STATIC_DIR = process.env.STATIC_DIR ?? "/app/public";
@@ -46,10 +47,12 @@ async function main(): Promise<void> {
     () => buildRunDeps(config, db, store),
     (result) => result && console.log(`server: run fetched=${result.run.fetched} aborted=${result.aborted}`),
   );
+  const connect = connectDeps(config, store);
   const app = createApp({
     allowedEmails: config.ALLOWED_EMAILS,
     runs: store.runs,
-    connect: connectDeps(config, store),
+    connect,
+    setup: setupDeps(connect),
     staticDir: STATIC_DIR,
     api: { db, ask: askDeps(store) },
   });

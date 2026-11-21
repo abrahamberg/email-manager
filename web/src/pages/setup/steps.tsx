@@ -1,75 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { PRESETS, type PresetName } from "../../domain/autonomy";
 import { OUTCOME_LABELS } from "../../domain/labels";
 import { Button, Chip } from "../../components/ui";
 import { useAppData, useStore } from "../../state/StoreProvider";
-
-interface StepProps {
-  onNext: () => void;
-  onBack?: () => void;
-}
-
-function StepFooter({ onNext, onBack, nextLabel = "Continue", disabled = false }: StepProps & { nextLabel?: string; disabled?: boolean }) {
-  return (
-    <div className="row">
-      <Button variant="primary" onClick={onNext} disabled={disabled}>{nextLabel}</Button>
-      {onBack && <Button variant="quiet" onClick={onBack}>Back</Button>}
-    </div>
-  );
-}
-
-function Step({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
-  return (
-    <div className="stack">
-      <h2>{title}</h2>
-      <p className="muted">{hint}</p>
-      {children}
-    </div>
-  );
-}
-
-export function ConnectStep({ onNext }: StepProps) {
-  const { settings } = useAppData();
-  const [tested, setTested] = useState(false);
-  return (
-    <Step title="Connect your mailbox" hint="IMAP works with Gmail, Outlook, Fastmail and most others. The password is stored as a Kubernetes Secret, never in the browser.">
-      <div className="form-grid">
-        <label>IMAP server<input id="setup-host" defaultValue={settings.mailbox.host} /></label>
-        <label>Email address<input id="setup-user" defaultValue={settings.mailbox.user} /></label>
-        <label>
-          Sign-in
-          <select id="setup-auth" defaultValue="app-password">
-            <option value="app-password">App password</option>
-            <option value="oauth">OAuth (Gmail, Outlook)</option>
-          </select>
-        </label>
-      </div>
-      <div className="row">
-        <Button onClick={() => setTested(true)}>Test connection</Button>
-        {tested && <Chip tone="ok">Connected · read-only for now</Chip>}
-      </div>
-      <StepFooter onNext={onNext} disabled={!tested} />
-    </Step>
-  );
-}
-
-export function LearnStep({ onNext, onBack }: StepProps) {
-  const { profile } = useAppData();
-  return (
-    <Step title="What I learned from your mail" hint={`I read the last ${profile.daysRead} days, read-only, to learn who matters to you and how you write.`}>
-      <ul className="facts">
-        <li><strong>{profile.emailsRead.toLocaleString("en-GB")}</strong> emails read</li>
-        <li><strong>{profile.peopleYouReplyTo}</strong> people you reply to. Their mail always reaches you.</li>
-        <li><strong>{profile.newsletters}</strong> newsletters and lists</li>
-      </ul>
-      <div className="task-preview">
-        <span className="section-title">Your writing tone</span>
-        <p>{profile.toneSummary}</p>
-      </div>
-      <StepFooter onNext={onNext} onBack={onBack} nextLabel="Looks right" />
-    </Step>
-  );
-}
+import { Step, StepFooter, type StepProps } from "./StepParts";
 
 export function ReviewStep({ onNext, onBack }: StepProps) {
   const { profile } = useAppData();

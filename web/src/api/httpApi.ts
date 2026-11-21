@@ -2,6 +2,7 @@ import type { AppData } from "../domain/types";
 import type { Answer } from "../state/assistant";
 import type { EmailManagerApi } from "./api";
 import { routeFor } from "./actionRoutes";
+import { createSetupApi } from "./setupApi";
 
 type Fetch = typeof fetch;
 
@@ -18,6 +19,7 @@ export function createHttpApi(fetchFn: Fetch = (...args) => fetch(...args)): Ema
   }
 
   return {
+    setup: createSetupApi(fetchFn),
     async loadAppData() {
       return (await (await call("GET", "/api/today")).json()) as AppData;
     },

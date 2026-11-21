@@ -11,6 +11,7 @@ import { lifeDetails } from "./mock/lifeDetails";
 import { areas, facts } from "./mock/areas";
 import { report } from "./mock/report";
 import { streams } from "./mock/streams";
+import { mockSetupApi, type SetupApi } from "./setupApi";
 
 // The one seam between the panel and the server. The real implementation
 // will call the backend over HTTP; the mock returns fixed data.
@@ -20,12 +21,14 @@ export interface EmailManagerApi {
   send(action: Action): Promise<void>;
   // `current` lets the mock answer from the live store; the server ignores it.
   ask(query: string, current?: AppData): Promise<Answer>;
+  setup: SetupApi;
 }
 
 export const mockApi: EmailManagerApi = {
   async loadAppData() {
     return structuredClone({ briefing, profile, areas, facts, details: { ...details, ...lifeDetails }, decisions, report, streams, snoozed: [], quickChecks, receipts, digest, tasks, policies, rules, feeds, runs, settings });
   },
+  setup: mockSetupApi,
   async send() {},
   async ask(query, current) {
     return answerQuestion(current ?? (await mockApi.loadAppData()), query);

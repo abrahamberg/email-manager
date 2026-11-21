@@ -256,6 +256,11 @@ for every message.
 - Touches: `server/src/http/routes/*.ts`.
 - Done: one route per action group, with zod-validated bodies and tests.
 
+**T23b · O · Execute queued mailbox actions**
+- Reads: `CLAUDE.md`, `server/src/ports.ts`, `server/src/mail/imapMailbox.ts`, `pipeline/runMailbox.ts`, `http/queries/receipts.ts`.
+- Touches: `ports.ts` (contract change allowed: `Mailbox.moveToInbox(messageId, from)`), the IMAP adapter, `store/migrations/003_panel_marks.ts`, a new `pipeline/pendingActions.ts`.
+- Done: Undo of a junk, digest or archive outcome moves the message back to INBOX on the next run, found by Message-ID; failures retry a bounded number of times; dry-run skips; tests with an in-memory Mailbox.
+
 **T24 · S · Real setup flow**
 - Reads: `CLAUDE.md`, `web/src/pages/setup/*`, `routes/runs.ts`, `routes/connect.ts`.
 - Done: Set up offers three choices: Office 365, Gmail, or another IMAP/SMTP
@@ -296,4 +301,4 @@ OAuth tokens, the pipeline, auth, feeds, AI safety and matter grouping.
 
 - [x] T0 · [x] T1 · [x] T2 · [x] T3 · [x] T4 · [x] T5 · [x] T6 · [x] T7 · [x] T8 · [x] T9 · [x] T9b · [x] T9c · [x] T10 · [x] T11 · [x] T12
 - [x] T13 · [x] T14 · [x] T15 · [x] T16 · [x] T17 · [x] T18 · [x] T19 · [x] T20 · [x] T21 · [x] T21b · [x] T21c
-- [x] T22 · [x] T23 · [ ] T24 · [ ] T25
+- [x] T22 · [x] T23 · [ ] T23b · [x] T24 · [ ] T25
