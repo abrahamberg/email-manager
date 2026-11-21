@@ -49,12 +49,16 @@ describe("smtpSender", () => {
   });
 });
 
+const greenmailUser: MailCredentials = {
+  kind: "password", user: process.env.GREENMAIL_USER ?? "test", password: process.env.GREENMAIL_PASSWORD ?? "test",
+};
+
 describe.skipIf(!process.env.GREENMAIL_HOST)("smtpSender with GreenMail", () => {
   it("delivers a message", async () => {
     const sender = smtpSender({
       host: process.env.GREENMAIL_HOST!, port: 3025, secure: false, allowPlaintext: true, from: "bot@localhost", enabled: true,
-      auth: { credentials: async () => pw },
+      auth: { credentials: async () => greenmailUser },
     });
-    await expect(sender.send({ ...mail, to: ["rcpt@localhost"] })).resolves.toBeUndefined();
+    await expect(sender.send({ ...mail, to: ["rcpt@example.test"] })).resolves.toBeUndefined();
   });
 });

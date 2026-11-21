@@ -93,17 +93,15 @@ describe.skipIf(!host)("imapMailbox against GreenMail", () => {
   it("reports a new UIDVALIDITY when the folder is recreated", async () => {
     const recreated = `Gone-${run}`;
     await c.mailboxCreate(recreated);
-    const first = open(recreated);
-    const before = await first.open();
-    await first.close();
-    await c.mailboxOpen("INBOX");
+    // STATUS, not SELECT: GreenMail 2.1.3 cannot delete a folder any session has selected.
+    const before = (await c.status(recreated, { uidValidity: true })).uidValidity;
     await c.mailboxDelete(recreated);
     await new Promise((r) => setTimeout(r, 1100));
     await c.mailboxCreate(recreated);
     await c.append(recreated, message(9));
     const second = open(recreated);
     const after = await second.open();
-    expect(after.uidValidity).not.toBe(before.uidValidity);
+    expect(after.uidValidity).not.toBe(Number(before));
     expect(await uids(second, 0)).toHaveLength(1);
     await second.close();
   });
