@@ -122,11 +122,11 @@ describe("delegation router", () => {
   });
 
   it("accepts good bodies and 404s unknown ids", async () => {
-    expect((await post("/rules/r1/status", { status: "active" })).status).toBe(200);
+    expect((await post("/rules/r1/status", { status: "active" })).status).toBe(204);
     expect((await post("/rules/zz/status", { status: "active" })).status).toBe(404);
-    expect((await post("/policies/newsletter/level", { level: "act" })).status).toBe(200);
+    expect((await post("/policies/newsletter/level", { level: "act" })).status).toBe(204);
     expect((await post("/policies/nonsense/level", { level: "act" })).status).toBe(404);
-    expect((await post("/quick-checks/q1", { correct: true })).status).toBe(200);
+    expect((await post("/quick-checks/q1", { correct: true })).status).toBe(204);
     expect((await post("/quick-checks/q1", { correct: true })).status).toBe(404);
     const p = (await createStore(getDb()).policies.list()).find((x) => x.category === "newsletter");
     expect(p).toMatchObject({ level: "act", correct: 1, checked: 1 });
