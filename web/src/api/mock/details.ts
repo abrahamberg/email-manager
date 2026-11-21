@@ -22,8 +22,8 @@ export const details: Record<string, EmailDetail> = {
     needsYou(0.2, "Direct question from a frequent contact, deadline Monday. Drafted a reply in your usual tone.", 1420),
   ),
   [emails.meetingInvite.id]: detail(
-    "Hi Daniel,\n\nGreat meeting you at the conference. Would Tuesday or Wednesday morning work for a 30 minute intro call? Happy to send an invite.\n\nBest,\nJonas",
-    needsYou(0.9, "Meeting request from a new contact. Checked your calendar for free slots.", 1650),
+    "Hi Daniel,\n\nThanks for applying to the Staff Backend Engineer role at Fabrikam. The team works mostly in C# and Kotlin. Would Tuesday or Wednesday morning work for a 30 minute intro call? Happy to send an invite.\n\nBest,\nJonas",
+    needsYou(0.9, "Job search: hiring manager asks for an intro call. Checked your calendar for free slots.", 1650),
   ),
   [emails.contract.id]: detail(
     "Dear customer,\n\nPlease review the attached renewal for 2027. Pricing changed in section 4 (+8%). Signature is needed by 28 November to avoid a service gap.\n\nContoso Legal",
@@ -62,7 +62,7 @@ export const details: Record<string, EmailDetail> = {
     { bulkHeaders: ["Precedence: bulk", "List-Unsubscribe"], spamScore: 3.8 },
   ),
   [emails.dentist.id]: detail(
-    "Reminder: you have an appointment on Tuesday 25 November at 09:30.\n\nReply YES to confirm or call us to reschedule.",
+    "Reminder: you have an appointment on Wednesday 25 November at 09:30.\n\nReply YES to confirm or call us to reschedule.",
     [rulesPassed, spamPassed(0.5), { stage: "lowValue", result: "passed", note: "Asks for a reply, so not low value" }, { stage: "ai", result: "decided", note: "Appointment matches your calendar. Replied YES (topic allowed: confirm appointments)", tokens: 720 }],
   ),
   [emails.bankStatement.id]: detail(

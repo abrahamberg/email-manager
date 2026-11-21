@@ -68,7 +68,13 @@ explicitly. Deleting mail is never automatic.
 ### A normal day (2 to 5 minutes)
 1. Open the app. **Briefing**: "Since 08:00, 52 emails arrived. 47 handled.
    4 need you, about 3 minutes. 2 quick checks."
-2. Work through the **decision stack**, one focused card at a time:
+2. **What's going on**: one short card per area of the user's life (the kid's
+   class, the current project, the job search, home, bills). Each says what is
+   happening there, what the assistant did ("I answered 4") and how many need
+   the user. Clicking "2 need you" narrows the decision stack to that area.
+3. **Coming up** (right rail): appointments and deadlines picked up from mail,
+   for the next two weeks, each linked to its source email.
+4. Work through the **decision stack**, one focused card at a time:
    - *Reply ready*: a draft written in the user's tone. `Enter` sends, `E`
      edits, `X` don't reply.
    - *Your choice needed*: e.g. a meeting invite with two time options already
@@ -77,14 +83,22 @@ explicitly. Deleting mail is never automatic.
      mail.
    - *Follow up*: "Mark hasn't answered in 5 days. Send a nudge?"
    - *New rule proposal*: "Move Substack newsletters to the digest?"
-3. Answer the **quick checks** (yes/no on uncertain automatic decisions).
-4. **Done**: "You're clear. Next briefing at 13:00."
+5. Answer the **quick checks** (yes/no on uncertain automatic decisions).
+6. **Done**: "You're clear. Next briefing at 13:00."
 
 ### When curious or worried
 - **Handled**: everything done automatically today, grouped by outcome, each
   with its reason and Undo, and "Always / Never" to teach.
 - **Digest**: low-value mail as one line per item, read when there is time.
   Mute, unsubscribe or promote a sender from there.
+
+### Asking instead of searching
+- The ask box on Today (and the command bar, `/`) answers questions from what
+  the assistant learned: "When is my tire change?" gives "Tue 24 Nov at 13:00,
+  Industrivägen 12, Solna" with the email it came from.
+- A plain topic searches by meaning, not words: "programming" finds the Java
+  job alert, the Nordpay case and the Kotlin meetup. The mock uses a small
+  concept map; the server will use embeddings.
 
 ### Weekly
 - **Delegation** shows accuracy per category and the system's suggestions to
@@ -95,7 +109,8 @@ explicitly. Deleting mail is never automatic.
 
 | Screen | Purpose |
 |---|---|
-| **Today** | Briefing, decision stack, quick checks, done state |
+| **Today** | Briefing, ask box, a card per life area, decision stack, quick checks, coming up |
+| **What I know** | Areas, what the user told it, people, learned facts with source; correct, forget, or add a new area |
 | **Handled** | Receipts of automatic actions, undo, teach |
 | **Digest** | Low-value mail summarised, sender actions |
 | **Tasks** | Mine (from mail, with due dates) and Waiting on others |
@@ -106,7 +121,16 @@ explicitly. Deleting mail is never automatic.
 | Email drawer | Any email in full, with the step-by-step trace of how it was decided |
 | Command bar | Plain-language questions and actions, from any screen |
 
-## 6. How correctness is backed
+## 6. Areas and memory
+
+The assistant keeps a small model of the user's life: **areas** (a name, a
+summary it rewrites each run, the user's own note, and the people involved)
+and **facts** (appointments, deadlines, addresses) each tied to the email it
+came from. Mail is sorted into areas, replies use the notes ("Elsa has a nut
+allergy"), and answers cite their source. Everything is visible and editable on
+**What I know**; a forgotten fact is never used again.
+
+## 7. How correctness is backed
 
 "Do as little as possible" only works if the user can trust what happened.
 Every place in the panel answers *why*:
@@ -126,7 +150,7 @@ Every place in the panel answers *why*:
 - **Presets never send.** Even "Hands-off" keeps replies at Suggest. Sending on
   its own is only ever a choice the user makes per category.
 
-## 7. Keyboard
+## 8. Keyboard
 
 | Key | Action |
 |---|---|

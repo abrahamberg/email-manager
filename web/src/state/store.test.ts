@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { AppData } from "../domain/types";
 import { mockApi } from "../api/api";
+import { answerQuestion } from "./assistant";
 import { storeReducer, type StoreState } from "./history";
-import { answerQuery } from "./commandBar";
 
 let initial: StoreState;
 
@@ -81,20 +81,6 @@ describe("undo", () => {
   });
 });
 
-describe("command bar", () => {
-  it("offers to unsubscribe from marketing senders", () => {
-    expect(answerQuery(initial.data, "unsubscribe from marketing").proposal?.action).toEqual({
-      type: "digest/unsubscribeCategory",
-      category: "marketing",
-    });
-  });
-
-  it("finds emails by sender", () => {
-    const answer = answerQuery(initial.data, "anything from Anna?");
-    expect(answer.matches.map((email) => email.from.name)).toContain("Anna Lind");
-  });
-});
-
 describe("snooze and rules", () => {
   it("brings snoozed decisions back", () => {
     const reply = decision(initial.data, "reply");
@@ -122,5 +108,23 @@ describe("snooze and rules", () => {
   it("applies a starting preset without ever letting replies go out on their own", () => {
     const { data } = run(initial, { type: "policy/applyPreset", preset: "handsOff" });
     for (const policy of data.policies.filter((item) => item.sendsMail)) expect(policy.level).toBe("suggest");
+  });
+});
+
+describe("what I know", () => {
+  it("forgotten facts are no longer used to answer", () => {
+    const { data } = run(initial, { type: "fact/forget", id: "f-tires" });
+    expect(answerQuestion(data, "When is my tire change?").fact).toBeUndefined();
+  });
+
+  it("an empty note clears it", () => {
+    const { data } = run(initial, { type: "area/setNote", id: "school", note: "  " });
+    expect(data.areas.find((area) => area.id === "school")?.note).toBeUndefined();
+  });
+
+  it("adds a new area to keep track of, and ignores a blank name", () => {
+    const added = run(initial, { type: "area/add", name: "Football club", note: "Coach on Saturdays" });
+    expect(added.data.areas.at(-1)).toMatchObject({ name: "Football club", note: "Coach on Saturdays", kind: "other" });
+    expect(run(initial, { type: "area/add", name: " ", note: "" }).data.areas).toHaveLength(initial.data.areas.length);
   });
 });

@@ -1,7 +1,20 @@
 import type { DigestGroup, Task } from "../../domain/types";
 import { emails } from "./emails";
+import { lifeEmails as life } from "./lifeEmails";
 
 export const digest: DigestGroup[] = [
+  {
+    id: "g5", sender: life.jobAlert.from, category: "newsletter", state: "normal",
+    entries: [{ subject: life.jobAlert.subject, summary: "Senior Java (remote EU), C# Backend (Stockholm), Staff Kotlin (hybrid). All match your search." }],
+  },
+  {
+    id: "g6", sender: life.cutover.from, category: "notification", state: "normal",
+    entries: [{ subject: life.cutover.subject, summary: "Atlas cutover moved to Mon 7 Dec for one more migration dry run." }],
+  },
+  {
+    id: "g7", sender: life.meetup.from, category: "newsletter", state: "normal",
+    entries: [{ subject: life.meetup.subject, summary: "27 Nov: Kotlin coroutines talk and a panel on hiring backend developers." }],
+  },
   {
     id: "g1", sender: emails.substack.from, category: "newsletter", state: "normal",
     entries: [

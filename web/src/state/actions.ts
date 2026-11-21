@@ -23,4 +23,7 @@ export type Action =
   | { type: "policy/applyPreset"; preset: PresetName }
   | { type: "rule/setStatus"; id: string; status: Rule["status"] }
   | { type: "rule/save"; id?: string; when: RuleCondition[]; then: RuleAction }
-  | { type: "settings/update"; patch: Partial<Settings> };
+  | { type: "settings/update"; patch: Partial<Settings> }
+  | { type: "fact/forget"; id: string }
+  | { type: "area/setNote"; id: string; note: string }
+  | { type: "area/add"; name: string; note: string };

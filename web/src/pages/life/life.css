@@ -1,0 +1,4 @@
+.area-section h2 { margin: 0; }
+
+.facts .fact { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.facts.list > li { padding: 10px 0; }

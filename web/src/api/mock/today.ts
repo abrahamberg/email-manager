@@ -1,7 +1,8 @@
 import type { Decision, QuickCheck } from "../../domain/types";
 import { emails } from "./emails";
+import { lifeEmails } from "./lifeEmails";
 
-export const decisions: Decision[] = [
+const unordered: Decision[] = [
   {
     kind: "reply",
     id: "d1",
@@ -15,14 +16,35 @@ export const decisions: Decision[] = [
     kind: "choice",
     id: "d2",
     email: emails.meetingInvite,
-    why: "A new contact asks for a meeting. Both slots are free in your calendar.",
+    why: "Part of your job search: Fabrikam's hiring manager wants an intro call. Both slots are free in your calendar.",
     question: "Which time should I offer Jonas?",
     recommended: 0,
     options: [
-      { label: "Tue 25 Nov, 10:00", detail: "Your calendar is free all morning" },
-      { label: "Wed 26 Nov, 09:30", detail: "Free, but right before your 10:00 stand-up" },
-      { label: "Decline politely", detail: "Sends a short, friendly no" },
+      { label: "Thu 26 Nov, 13:00", detail: "Your afternoon is free and you'll have done the Nordpay case prep" },
+      { label: "Wed 25 Nov, 11:00", detail: "Possible, but you're at the dentist until about 10:15" },
+      { label: "Not interested", detail: "Sends a short, friendly no" },
     ],
+  },
+  {
+    kind: "choice",
+    id: "d6",
+    email: lifeEmails.classTrip,
+    why: "Elsa's class trip needs a signature and a payment. I never sign or pay on my own. Due Friday 27 Nov.",
+    question: "What should I do about the Skansen trip?",
+    recommended: 0,
+    options: [
+      { label: "Yes: reply that you'll sign and pay", detail: "I reply to Maria, add “Swish 150 kr” to your tasks and remind you Thursday" },
+      { label: "Ask Maria a question first", detail: "I draft a question for you to edit" },
+      { label: "Elsa won't go", detail: "I draft a polite reply to Maria" },
+    ],
+  },
+  {
+    kind: "reply",
+    id: "d7",
+    email: lifeEmails.party,
+    why: "Elsa is invited to Saga's party on Saturday 28 Nov. Your calendar is free. RSVP is due Wednesday.",
+    confidence: 0.8,
+    draft: "Hi Lina,\n\nThanks! Elsa would love to come on Saturday. I'll drop her off at Lekland at 14:00.\n\nBest,\nDaniel",
   },
   {
     kind: "task",
@@ -48,6 +70,10 @@ export const decisions: Decision[] = [
     ruleId: "r-ai-1",
   },
 ];
+
+const ORDER = ["d1", "d6", "d2", "d7", "d3", "d4", "d5"];
+
+export const decisions = ORDER.map((id) => unordered.find((decision) => decision.id === id)!);
 
 export const quickChecks: QuickCheck[] = [
   { id: "q1", receiptId: "h5", question: "I confirmed your dentist appointment. Was that right?" },

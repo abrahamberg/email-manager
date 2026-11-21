@@ -9,6 +9,7 @@ import { TasksPage } from "../pages/tasks/TasksPage";
 import { DelegationPage } from "../pages/delegation/DelegationPage";
 import { ActivityPage } from "../pages/activity/ActivityPage";
 import { SettingsPage } from "../pages/settings/SettingsPage";
+import { LifePage } from "../pages/life/LifePage";
 import { SetupPage } from "../pages/setup/SetupPage";
 import { Nav } from "./Nav";
 import { CommandBar } from "./CommandBar";
@@ -19,6 +20,7 @@ import { EmailViewerProvider, useEmailViewer } from "./EmailViewer";
 function Page({ route, shortcutsEnabled }: { route: Route; shortcutsEnabled: boolean }) {
   switch (route) {
     case "today": return <TodayPage shortcutsEnabled={shortcutsEnabled} />;
+    case "life": return <LifePage />;
     case "handled": return <HandledPage />;
     case "digest": return <DigestPage />;
     case "tasks": return <TasksPage />;

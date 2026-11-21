@@ -25,6 +25,38 @@ export interface EmailRef {
   receivedAt: string;
   snippet: string;
   category: Category;
+  areaId?: string;
+}
+
+export type AreaKind = "family" | "work" | "jobSearch" | "home" | "admin" | "other";
+
+export interface AreaPerson {
+  name: string;
+  role: string;
+}
+
+// A part of the user's life that mail belongs to. The summary is written by
+// the AI from recent mail; the note is what the user told it directly.
+export interface Area {
+  id: string;
+  kind: AreaKind;
+  name: string;
+  summary: string;
+  note?: string;
+  people: AreaPerson[];
+}
+
+export type FactKind = "appointment" | "deadline" | "address" | "person" | "note";
+
+export interface Fact {
+  id: string;
+  areaId: string;
+  kind: FactKind;
+  title: string;
+  detail: string;
+  at?: string;
+  place?: string;
+  sourceEmailId?: string;
 }
 
 export type AuthVerdict = "pass" | "fail" | "none";
@@ -210,6 +242,8 @@ export interface AppData {
   briefing: Briefing;
   details: Record<string, EmailDetail>;
   profile: MailboxProfile;
+  areas: Area[];
+  facts: Fact[];
   decisions: Decision[];
   snoozed: Decision[];
   quickChecks: QuickCheck[];

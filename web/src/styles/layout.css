@@ -71,3 +71,4 @@
   .main { padding: 20px 16px 120px; }
   .notice { bottom: 84px; }
 }
+.main:has(.today-grid) { max-width: 1260px; }

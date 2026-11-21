@@ -4,6 +4,7 @@ import { useAppData } from "../state/StoreProvider";
 
 const LINKS: { route: Route; label: string }[] = [
   { route: "today", label: "Today" },
+  { route: "life", label: "What I know" },
   { route: "handled", label: "Handled" },
   { route: "digest", label: "Digest" },
   { route: "tasks", label: "Tasks" },
