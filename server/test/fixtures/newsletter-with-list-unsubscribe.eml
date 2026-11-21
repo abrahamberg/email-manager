@@ -1,0 +1,12 @@
+From: Weekly Digest <news@digest.example>
+To: me@example.com
+Subject: Your weekly digest
+Date: Mon, 03 Nov 2025 08:00:00 +0000
+Message-ID: <nl-1@digest.example>
+List-Unsubscribe: <https://digest.example/unsub?u=1>, <mailto:unsub@digest.example>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+Precedence: bulk
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body><h1>This week</h1><p>Read <a href="https://digest.example/a1">article one</a> and <a href="https://digest.example/a2">article two</a>.</p><a href="https://digest.example/a1">again</a></body></html>

@@ -1,0 +1,9 @@
+From: LinkedIn Jobs <jobs-noreply@linkedin.example>
+To: me@example.com
+Subject: 8 new jobs for "software engineer"
+Date: Tue, 04 Nov 2025 06:30:00 +0000
+Message-ID: <job-1@linkedin.example>
+MIME-Version: 1.0
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>New jobs for you</p><ul><li><a href="https://jobs.linkedin.example/view/1">Engineer at Acme</a></li><li><a href="https://jobs.linkedin.example/view/2">Developer at Beta</a></li><li><a href="https://jobs.linkedin.example/view/3">SRE at Gamma</a></li><li><a href="https://jobs.linkedin.example/view/4">Backend at Delta</a></li><li><a href="https://jobs.linkedin.example/view/5">Staff at Epsilon</a></li><li><a href="https://jobs.linkedin.example/view/6">Lead at Zeta</a></li><li><a href="https://jobs.linkedin.example/view/7">Data at Eta</a></li><li><a href="https://jobs.linkedin.example/view/8">ML at Theta</a></li></ul></body></html>

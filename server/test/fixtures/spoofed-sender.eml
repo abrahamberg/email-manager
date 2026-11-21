@@ -1,0 +1,12 @@
+From: Your Bank <security@bank.example>
+Reply-To: help@scam.example
+To: me@example.com
+Subject: Verify your account now
+Date: Thu, 06 Nov 2025 03:00:00 +0000
+Message-ID: <spoof-1@mail.evil.example>
+Received-SPF: fail (bank.example: not designated)
+Authentication-Results: mx.example.com; spf=fail smtp.mailfrom=evil.example; dkim=fail header.d=bank.example; dmarc=fail header.from=bank.example
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+
+Your account is locked. Sign in at http://bank-login.evil.example/verify now.

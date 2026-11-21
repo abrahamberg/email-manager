@@ -1,0 +1,19 @@
+From: Pat <pat@partner.example>
+To: me@example.com
+Subject: Contract draft
+Date: Fri, 14 Nov 2025 16:00:00 +0000
+Message-ID: <att-1@partner.example>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BND"
+
+--BND
+Content-Type: text/plain; charset=utf-8
+
+Draft attached, please review.
+--BND
+Content-Type: application/pdf; name="contract.pdf"
+Content-Disposition: attachment; filename="contract.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJSBkdW1teQo=
+--BND--
