@@ -1,8 +1,12 @@
 import type { Db } from "./db";
 import { init } from "./migrations/001_init";
+import { phase2 } from "./migrations/002_phase2";
 
 // SQL lives in TS constants because the server is bundled and reads no files at runtime.
-export const migrations: { id: string; sql: string }[] = [{ id: "001_init", sql: init }];
+export const migrations: { id: string; sql: string }[] = [
+  { id: "001_init", sql: init },
+  { id: "002_phase2", sql: phase2 },
+];
 
 export async function migrate(db: Db, list = migrations): Promise<string[]> {
   await db.exec(

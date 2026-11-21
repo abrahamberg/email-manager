@@ -1,7 +1,7 @@
 import type {
   Briefing, Category, Decision, DigestGroup, EmailDetail, Outcome, PipelineStage, Receipt, ReportItem, Settings, Task,
 } from "@email-manager/shared";
-import type { OutcomeRecord } from "../ports";
+import type { TieredOutcome as OutcomeRecord } from "../store/outcomes";
 import type { Db } from "../store/db";
 import { countMessagesSince, messagesByIds, type MessageRow } from "./today/queries";
 import { refForOutcome } from "./today/refs";
@@ -38,10 +38,10 @@ export async function buildBriefing(
   };
 }
 
-/** Worth knowing: the assistant filed or labelled something in a life area, nothing to do. */
+/** Worth knowing: triage tiered it that way, it sits in a life area and the assistant really acted. */
 export function buildReportItems(outcomes: OutcomeRecord[], msgs: Msgs): ReportItem[] {
   return outcomes
-    .filter((o) => (o.outcome === "archived" || o.outcome === "labeled") && o.areaId && !o.dryRun)
+    .filter((o) => o.tier === "worthKnowing" && o.areaId && !o.dryRun)
     .map((o) => ({
       id: `rep-${o.messageId}`,
       areaId: o.areaId!,

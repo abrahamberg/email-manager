@@ -1,5 +1,6 @@
 import type { Category, Person } from "@email-manager/shared";
-import type { OutcomeRecord } from "../../ports";
+import type { Tier } from "../../ports";
+import type { TieredOutcome } from "../../store/outcomes";
 import type { Db } from "../../store/db";
 import { iso } from "../../store/convert";
 
@@ -31,21 +32,21 @@ export async function messagesByIds(db: Db, ids: string[]): Promise<Map<string, 
 }
 
 interface RawOutcome {
-  message_id: string; uid: string | number; outcome: OutcomeRecord["outcome"]; signal: OutcomeRecord["signal"];
-  reason: string; confidence: number | null; area_id: string | null; dry_run: boolean; at: unknown;
+  message_id: string; uid: string | number; outcome: TieredOutcome["outcome"]; signal: TieredOutcome["signal"];
+  reason: string; confidence: number | null; area_id: string | null; dry_run: boolean; tier: Tier | null; at: unknown;
 }
 
-const toOutcome = (r: RawOutcome): OutcomeRecord => ({
+const toOutcome = (r: RawOutcome): TieredOutcome => ({
   messageId: r.message_id, uid: Number(r.uid), outcome: r.outcome, signal: r.signal, reason: r.reason,
-  confidence: r.confidence ?? undefined, areaId: r.area_id ?? undefined, dryRun: r.dry_run, at: iso(r.at),
+  confidence: r.confidence ?? undefined, areaId: r.area_id ?? undefined, dryRun: r.dry_run, ...(r.tier ? { tier: r.tier } : {}), at: iso(r.at),
 });
 
-export async function outcomesSince(db: Db, since: string): Promise<OutcomeRecord[]> {
+export async function outcomesSince(db: Db, since: string): Promise<TieredOutcome[]> {
   const rows = await db.query<RawOutcome>("SELECT * FROM outcomes WHERE at >= $1 ORDER BY at DESC, id DESC", [since]);
   return rows.map(toOutcome);
 }
 
-export async function outcomesFor(db: Db, ids: string[]): Promise<OutcomeRecord[]> {
+export async function outcomesFor(db: Db, ids: string[]): Promise<TieredOutcome[]> {
   if (ids.length === 0) return [];
   const rows = await db.query<RawOutcome>(
     "SELECT * FROM outcomes WHERE message_id = ANY($1::text[]) ORDER BY at, id", [ids]);
@@ -55,15 +56,6 @@ export async function outcomesFor(db: Db, ids: string[]): Promise<OutcomeRecord[
 export async function countMessagesSince(db: Db, since: string): Promise<number> {
   const [r] = await db.query<{ n: number }>("SELECT count(*)::int AS n FROM messages WHERE received_at >= $1", [since]);
   return r?.n ?? 0;
-}
-
-export interface RuleRow {
-  id: string; source: "feed" | "user" | "ai"; status: "active" | "proposed" | "disabled";
-  text: string; hits: number; definition: { when?: unknown; then?: unknown } | null;
-}
-
-export function allRules(db: Db): Promise<RuleRow[]> {
-  return db.query<RuleRow>("SELECT id, source, status, text, hits, definition FROM rules ORDER BY priority DESC, id");
 }
 
 export interface ProfileCounts { emails: number; first: unknown; replied: number; newsletters: number }

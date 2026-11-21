@@ -36,7 +36,7 @@ describe("today payload", () => {
   const getDb = useFreshDb();
   beforeEach(async () => {
     const db = getDb();
-    for (const t of ["outcomes", "messages", "decisions", "streams", "areas", "runs", "rules", "settings"])
+    for (const t of ["outcomes", "messages", "decisions", "streams", "areas", "runs", "rules", "settings", "tasks", "briefings", "quick_checks"])
       await db.exec(`DELETE FROM ${t}`);
   });
 
@@ -56,7 +56,7 @@ describe("today payload", () => {
     await msg("m1", "Weekly news", "newsletter");
     await msg("m2", "Boiler service", "question", "home");
     await s.outcomes.record({ messageId: "m1", uid: 1, outcome: "digest", signal: "rule", reason: "list", dryRun: false, at });
-    await s.outcomes.record({ messageId: "m2", uid: 2, outcome: "labeled", signal: "ai", reason: "home", areaId: "home", dryRun: false, at });
+    await s.outcomes.record({ messageId: "m2", uid: 2, outcome: "labeled", signal: "ai", reason: "home", areaId: "home", dryRun: false, tier: "worthKnowing", at });
     const email = { id: "m2", from: { name: "A", address: "a@x" }, subject: "Boiler service", receivedAt: at, snippet: "", category: "question" as const };
     await s.decisions.add({ id: "d2", kind: "task", email, matter: "m", need: "n", why: "w", title: "Book", deadline: "2026-12-01" });
     await s.decisions.add({ id: "d1", kind: "task", email, matter: "m", need: "n", why: "w", title: "Pay", deadline: "2026-11-25" });

@@ -10,10 +10,10 @@ describe("migrate", () => {
   });
 
   it("rolls back a failing migration", async () => {
-    const bad = [{ id: "002_bad", sql: "CREATE TABLE t_ok (x int); SELECT nope FROM missing;" }];
+    const bad = [{ id: "003_bad", sql: "CREATE TABLE t_ok (x int); SELECT nope FROM missing;" }];
     await expect(migrate(db(), bad)).rejects.toThrow();
     const ids = await db().query<{ id: string }>("SELECT id FROM schema_migrations");
-    expect(ids.map((r) => r.id)).toEqual(["001_init"]);
+    expect(ids.map((r) => r.id)).toEqual(["001_init", "002_phase2"]);
     expect(await db().query("SELECT 1 FROM pg_tables WHERE tablename = 't_ok'")).toHaveLength(0);
   });
 

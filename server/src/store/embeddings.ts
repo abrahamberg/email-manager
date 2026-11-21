@@ -1,4 +1,5 @@
 import type { Db } from "./db";
+import { pgRealArray } from "./convert";
 
 export type OwnerKind = "message" | "matter" | "fact" | "area" | "streamItem";
 
@@ -7,7 +8,6 @@ export interface Neighbour {
   score: number;
 }
 
-const toPgArray = (v: number[]) => `{${v.map((x) => (Number.isFinite(x) ? x : 0)).join(",")}}`;
 
 function cosine(a: number[], b: number[]): number {
   let dot = 0, na = 0, nb = 0;
@@ -26,7 +26,7 @@ export function embeddingRepo(db: Db) {
       await db.query(
         `INSERT INTO embeddings (owner_kind, owner_id, vector) VALUES ($1, $2, $3::real[])
          ON CONFLICT (owner_kind, owner_id) DO UPDATE SET vector = $3::real[], updated_at = now()`,
-        [kind, ownerId, toPgArray(vector)],
+        [kind, ownerId, pgRealArray(vector)],
       );
     },
     async get(kind: OwnerKind, ownerId: string): Promise<number[] | undefined> {

@@ -14,3 +14,8 @@ export function orUndef<T>(v: T | null): T | undefined {
 export function json(v: unknown): string {
   return JSON.stringify(v);
 }
+
+/** A Postgres array literal for a real[] parameter (cast with ::real[]). */
+export function pgRealArray(v: number[]): string {
+  return `{${v.map((x) => (Number.isFinite(x) ? x : 0)).join(",")}}`;
+}

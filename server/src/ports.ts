@@ -129,6 +129,7 @@ export interface OutcomeRecord {
   reason: string;
   confidence?: number;
   areaId?: string;
+  tier?: Tier;
   dryRun: boolean;
   at: string;
 }

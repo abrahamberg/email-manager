@@ -1,12 +1,12 @@
-import type {
-  AppData, CategoryPolicy, Decision, MailboxProfile, Outcome, Rule, Settings,
-} from "@email-manager/shared";
+import type { AppData, Decision, MailboxProfile, Outcome, Settings, Task } from "@email-manager/shared";
 import type { Db } from "../store/db";
 import { createStore, type Store } from "../store";
 import {
   buildBriefing, buildDetails, buildDigest, buildReceipts, buildReportItems, buildTasks, loadReferenced,
 } from "./buildReport";
-import { allRules, outcomeCounts, outcomesFor, outcomesSince, profileCounts, type RuleRow } from "./today/queries";
+import { outcomeCounts, outcomesFor, outcomesSince, profileCounts, type MessageRow } from "./today/queries";
+import { emailRef } from "./today/refs";
+import type { StoredTask } from "../store/tasks";
 import { startOfTodayStockholm } from "./today/time";
 
 const RECENT_RUNS = 20;
@@ -23,16 +23,6 @@ export const DEFAULT_SETTINGS: Settings = {
   scheduleMinutes: 15,
 };
 
-const POLICIES: [CategoryPolicy["category"], string, boolean][] = [
-  ["security", "Spam and phishing", false], ["newsletter", "Newsletters", false],
-  ["marketing", "Marketing and offers", false], ["notification", "Notifications", false],
-  ["receipt", "Receipts and statements", false], ["meeting", "Meeting requests", true],
-  ["question", "Questions from contacts", true],
-];
-
-export const defaultPolicies = (): CategoryPolicy[] =>
-  POLICIES.map(([category, label, sendsMail]) => ({ category, label, level: "suggest", correct: 0, checked: 0, sendsMail }));
-
 const byDeadline = (a: Decision, b: Decision) =>
   (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999");
 
@@ -47,41 +37,44 @@ export async function buildProfile(db: Db, now: Date): Promise<MailboxProfile> {
   };
 }
 
-function toRule(r: RuleRow): Rule {
-  const d = r.definition ?? {};
-  return {
-    id: r.id, text: r.text || `Rule ${r.id}`, source: r.source, status: r.status, hits: r.hits,
-    ...(Array.isArray(d.when) ? { when: d.when as Rule["when"] } : {}),
-    ...(d.then ? { then: d.then as Rule["then"] } : {}),
-  };
+function storedTasks(rows: StoredTask[], msgs: Map<string, MessageRow>, now: Date): Task[] {
+  return rows.map((t) => ({
+    id: t.id, title: t.title, owner: t.owner, done: t.done, ...(t.due ? { due: t.due } : {}),
+    email: emailRef(t.messageId, msgs.get(t.messageId), { at: now.toISOString() }),
+  }));
 }
 
 export async function buildAppData(db: Db, now = new Date(), store: Store = createStore(db)): Promise<AppData> {
-  const since = startOfTodayStockholm(now);
-  const [settingsRow, pendingRaw, snoozed, areas, facts, streams, feeds, runs, ruleRows, today] = await Promise.all([
-    store.settings.get(), store.decisions.pending(), store.decisions.snoozed(), store.areas.list(),
-    store.facts.list(), store.streams.list(), store.rules.feeds(), store.runs.recent(RECENT_RUNS),
-    allRules(db), outcomesSince(db, since),
-  ]);
+  const dayStart = startOfTodayStockholm(now);
+  const [settingsRow, pendingRaw, snoozed, areas, facts, streams, feeds, runs, rules, today, lastBriefing, policies, quickChecks, tasks] =
+    await Promise.all([
+      store.settings.get(), store.decisions.pending(), store.decisions.snoozed(), store.areas.list(),
+      store.facts.list(), store.streams.list(), store.rules.feeds(), store.runs.recent(RECENT_RUNS),
+      store.rules.listShared(), outcomesSince(db, dayStart), store.briefings.get(), store.policies.list(),
+      store.quickChecks.listOpen(), store.tasks.list(),
+    ]);
   const settings = { ...DEFAULT_SETTINGS, ...settingsRow };
+  const since = lastBriefing ?? dayStart;
+  const sinceOutcomes = since === dayStart ? today : await outcomesSince(db, since);
   const decisions = [...pendingRaw].sort(byDeadline);
   const ids = [
-    ...today.map((o) => o.messageId), ...decisions.map((d) => d.email.id), ...snoozed.map((d) => d.email.id),
-    ...streams.map((s) => s.emailId), ...facts.flatMap((f) => (f.sourceEmailId ? [f.sourceEmailId] : [])),
+    ...today.map((o) => o.messageId), ...sinceOutcomes.map((o) => o.messageId), ...decisions.map((d) => d.email.id),
+    ...snoozed.map((d) => d.email.id), ...streams.map((s) => s.emailId), ...tasks.map((t) => t.messageId),
+    ...facts.flatMap((f) => (f.sourceEmailId ? [f.sourceEmailId] : [])),
   ];
   const msgs = await loadReferenced(db, ids);
   const trace = await outcomesFor(db, [...new Set(ids)]);
   return {
-    briefing: await buildBriefing(db, since, now, settings, today, msgs),
+    briefing: await buildBriefing(db, since, now, settings, sinceOutcomes, msgs),
     profile: await buildProfile(db, now),
     areas, facts, decisions, snoozed, streams, feeds, runs, settings,
     details: buildDetails(ids, msgs, trace),
     report: buildReportItems(today, msgs),
-    quickChecks: [],
+    quickChecks,
     receipts: buildReceipts(today, msgs),
     digest: buildDigest(today, msgs),
-    tasks: buildTasks(decisions),
-    policies: defaultPolicies(),
-    rules: ruleRows.map(toRule),
+    tasks: [...storedTasks(tasks, msgs, now), ...buildTasks(decisions)],
+    policies,
+    rules,
   };
 }

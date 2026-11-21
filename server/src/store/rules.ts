@@ -1,6 +1,7 @@
-import type { RuleFeed } from "@email-manager/shared";
+import type { Rule as SharedRule, RuleFeed } from "@email-manager/shared";
 import type { RuleSource } from "../ports";
 import { Rule } from "../rules/Rule";
+import { describeRule } from "../rules/describeRule";
 import type { Db } from "./db";
 import { iso, json } from "./convert";
 
@@ -8,6 +9,20 @@ export interface StoredRule {
   rule: Rule;
   text?: string;
   feedId?: string;
+}
+
+interface ListRow {
+  id: string; source: SharedRule["source"]; status: SharedRule["status"]; text: string; hits: number;
+  definition: { when?: SharedRule["when"]; then?: SharedRule["then"] } | null;
+}
+
+function toShared(r: ListRow): SharedRule {
+  const { when, then } = r.definition ?? {};
+  const text = r.text || (when?.length && then ? describeRule(when, then) : `Rule ${r.id}`);
+  return {
+    id: r.id, text, source: r.source, status: r.status, hits: r.hits,
+    ...(Array.isArray(when) ? { when } : {}), ...(then ? { then } : {}),
+  };
 }
 
 const upsertSql = `
@@ -40,8 +55,16 @@ export function ruleRepo(db: Db) {
   return {
     ...source,
     save: (r: StoredRule) => upsert(db, r).then(() => undefined),
-    async setStatus(id: string, status: Rule["status"]) {
-      await db.query("UPDATE rules SET status = $2 WHERE id = $1", [id, status]);
+    /** False when no rule has that id. */
+    async setStatus(id: string, status: Rule["status"]): Promise<boolean> {
+      const rows = await db.query("UPDATE rules SET status = $2 WHERE id = $1 RETURNING id", [id, status]);
+      return rows.length > 0;
+    },
+    /** Every rule in the panel's shape, with a plain sentence when none was saved. */
+    async listShared(): Promise<SharedRule[]> {
+      const rows = await db.query<ListRow>(
+        "SELECT id, source, status, text, hits, definition FROM rules ORDER BY priority DESC, id");
+      return rows.map(toShared);
     },
     async addHits(id: string, n = 1) {
       await db.query("UPDATE rules SET hits = hits + $2 WHERE id = $1", [id, n]);

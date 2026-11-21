@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { CategoryPolicy } from "@email-manager/shared";
 import { proposeRule } from "../../src/trust/proposeRule.js";
 import { suggestAutonomy } from "../../src/trust/autonomy.js";
 import { autonomySuggestions, tallyByCategory, withAccuracy } from "../../src/trust/accuracy.js";
 import { pickQuickChecks, type CheckCandidate } from "../../src/trust/quickChecks.js";
-import { delegationRoutes, type DelegationStore } from "../../src/http/routes/delegation.js";
+import { delegationRoutes } from "../../src/http/routes/delegation.js";
+import { createStore } from "../../src/store/index.js";
+import { useFreshDb } from "../store/freshDb.js";
 
 const replied = new Set(["boss@corp.com"]);
 const base = { id: "r1", source: "ai", when: [{ field: "from", operator: "contains", value: "news@shop.com" }], then: { kind: "digest" } };
@@ -88,21 +90,28 @@ describe("pickQuickChecks", () => {
 });
 
 describe("delegation router", () => {
-  const store: DelegationStore = {
-    policies: async () => [policy({})],
-    rules: async () => [],
-    feeds: async () => [],
-    setRuleStatus: async (id) => id === "r1",
-    setPolicyLevel: async () => true,
-    answerQuickCheck: async () => true,
-  };
-  const app = delegationRoutes(store);
+  const getDb = useFreshDb();
   const post = (path: string, body: unknown) =>
-    app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body: typeof body === "string" ? body : JSON.stringify(body) });
+    delegationRoutes(createStore(getDb())).request(path, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: typeof body === "string" ? body : JSON.stringify(body),
+    });
+
+  beforeAll(async () => {
+    const s = createStore(getDb());
+    await s.rules.save({ rule: { id: "r1", source: "user", when: [{ field: "from", operator: "is", value: "a@x" }], then: { kind: "digest" }, priority: 0, status: "proposed" } });
+    await s.messages.save({ messageId: "m1", uid: 1, fromAddress: "a@x", subject: "s", receivedAt: "2026-11-21T09:00:00Z", category: "newsletter", compactText: "" });
+    await s.outcomes.record({ messageId: "m1", uid: 1, outcome: "digest", signal: "rule", reason: "list", dryRun: false, at: "2026-11-21T09:00:00Z" });
+    await s.quickChecks.create({ id: "q1", messageId: "m1", question: "Right?" });
+  });
 
   it("returns the summary", async () => {
-    const res = await app.request("/delegation");
-    expect(await res.json()).toEqual({ policies: [policy({})], rules: [], feeds: [] });
+    const res = await delegationRoutes(createStore(getDb())).request("/delegation");
+    const body = (await res.json()) as { policies: unknown[]; rules: { id: string; text: string }[]; feeds: unknown[] };
+    expect(body.policies).toHaveLength(7);
+    expect(body.rules.map((r) => r.id)).toEqual(["r1"]);
+    expect(body.rules[0]?.text).toBe("When sender is “a@x”: move to the digest");
+    expect(body.feeds).toEqual([]);
   });
 
   it("validates bodies", async () => {
@@ -112,10 +121,14 @@ describe("delegation router", () => {
     expect((await post("/quick-checks/q1", { correct: "yes" })).status).toBe(400);
   });
 
-  it("accepts good bodies and 404s unknown rules", async () => {
+  it("accepts good bodies and 404s unknown ids", async () => {
     expect((await post("/rules/r1/status", { status: "active" })).status).toBe(200);
     expect((await post("/rules/zz/status", { status: "active" })).status).toBe(404);
     expect((await post("/policies/newsletter/level", { level: "act" })).status).toBe(200);
+    expect((await post("/policies/nonsense/level", { level: "act" })).status).toBe(404);
     expect((await post("/quick-checks/q1", { correct: true })).status).toBe(200);
+    expect((await post("/quick-checks/q1", { correct: true })).status).toBe(404);
+    const p = (await createStore(getDb()).policies.list()).find((x) => x.category === "newsletter");
+    expect(p).toMatchObject({ level: "act", correct: 1, checked: 1 });
   });
 });
