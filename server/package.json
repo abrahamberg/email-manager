@@ -1,0 +1,20 @@
+{
+  "name": "@email-manager/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "esbuild src/main.ts src/worker.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist"
+  },
+  "dependencies": {
+    "@email-manager/shared": "*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.1"
+  }
+}
