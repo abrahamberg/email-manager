@@ -1,12 +1,12 @@
 import { z } from "zod";
+import { PRIVATE_V4 } from "./publicAddress";
 
-const PRIVATE_V4 = [/^0\./, /^10\./, /^127\./, /^169\.254\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, /^(22[4-9]|2[3-5]\d)\./];
 const INTERNAL_SUFFIXES = [".local", ".localhost", ".internal", ".svc", ".cluster", ".lan", ".home", ".corp"];
 
 /**
  * Why: the panel lets a user pick the host the server connects to. Refusing private and
- * single-label names keeps that from reaching cluster services. A name that resolves to a
- * private address is not caught here; the deployment's network policy has to cover it.
+ * single-label names keeps that from reaching cluster services. Names are resolved and
+ * checked again at connect time (resolvePublic), which also closes DNS rebinding.
  */
 export function isPublicHost(raw: string): boolean {
   const host = raw.toLowerCase();
@@ -28,6 +28,8 @@ export const ImapTarget = z.object({
   user: z.string().trim().min(1).max(254),
   password: z.string().min(1).max(512),
 }).strict();
+
+export type ImapTarget = z.infer<typeof ImapTarget>;
 
 export const OAuthTarget = z.object({ provider: z.enum(["office365", "gmail"]) }).strict();
 

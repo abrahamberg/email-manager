@@ -1,6 +1,6 @@
 import type { Email } from "../mail/Email";
 import type { Embedder, Triage } from "../ports";
-import { cosine } from "./cosine";
+import { cosine } from "../search/cosine";
 import { entityKeys } from "./entityKeys";
 
 export const SIMILARITY_THRESHOLD = 0.82;

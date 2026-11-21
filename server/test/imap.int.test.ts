@@ -15,7 +15,7 @@ const folder = `Work-${run}`;
 const message = (n: number) => `Message-ID: <${run}-${n}@test>\r\nFrom: a@test\r\nTo: ${user}@localhost\r\nSubject: ${run} ${n}\r\n\r\nbody ${n}\r\n`;
 
 const admin = () => new ImapFlow({ host: host!, port, secure: false, auth: { user, pass: password }, logger: false });
-const open = (inbox = folder) => imapMailbox({ host: host!, port, secure: false, auth, folders: { inbox } });
+const open = (inbox = folder) => imapMailbox({ host: host!, port, secure: false, allowPlaintext: true, auth, folders: { inbox } });
 
 async function uids(m: Mailbox, since: number) {
   const out: number[] = [];

@@ -1,5 +1,7 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { requireAllowedUser, type AuthEnv } from "./auth";
+import { requireSameOrigin } from "./csrf";
 import { onError, requestId, type RequestIdEnv } from "./errors";
 import { createStore, type Db } from "../store";
 import type { AskDeps } from "../life/answerQuestion";
@@ -22,6 +24,7 @@ export interface AppDeps {
   api?: { db: Db; ask: AskDeps };
 }
 
+const MAX_BODY_BYTES = 64 * 1024;
 const CSP = "default-src 'self'; frame-ancestors 'none'";
 
 /** The public listener. Internal routes live in internalApp and are never mounted here. */
@@ -37,6 +40,8 @@ export function createApp(deps: AppDeps): Hono<AuthEnv & RequestIdEnv> {
   app.onError(onError);
   app.route("/", healthRoutes());
   app.use("/api/*", requireAllowedUser(deps.allowedEmails));
+  app.use("/api/*", requireSameOrigin);
+  app.use("/api/*", bodyLimit({ maxSize: MAX_BODY_BYTES, onError: (c) => c.json({ error: "too_large" }, 413) }));
   app.route("/", runsRoutes(deps.runs));
   if (deps.api) app.route("/api", apiRoutes(createStore(deps.api.db), deps.api.db, deps.api.ask));
   if (deps.connect) app.route("/", connectRoutes(deps.connect));

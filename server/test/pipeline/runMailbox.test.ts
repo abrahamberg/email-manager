@@ -78,4 +78,17 @@ describe("runMailbox", () => {
     await runMailbox(deps);
     expect(order).toEqual(["migrate", "open"]);
   });
+
+  it.each([
+    ["the panel paused it", false, true, false],
+    ["the panel did not pause it", false, false, true],
+    ["the deployment is in dry-run, whatever the panel says", true, false, false],
+  ])("touches the mailbox only when neither side says dry-run: %s", async (_name, envDryRun, paused, touches) => {
+    const box = fakeMailbox({ uidValidity: 9, uidNext: 304 }, msgs());
+    const cursor = fakeCursor({ uidValidity: 9, uidNext: 301 });
+    const { deps, records } = runDeps({ mailbox: box.mailbox, cursor, dryRun: envDryRun, pausedInPanel: async () => paused });
+    await runMailbox(deps);
+    expect(box.changes().length > 0).toBe(touches);
+    expect(records.every((r) => r.dryRun === !touches)).toBe(true);
+  });
 });

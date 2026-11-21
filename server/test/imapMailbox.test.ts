@@ -9,8 +9,10 @@ interface Box { uidValidity: bigint; uidNext: number; messages: Map<number, Msg>
 
 function fakeServer(boxes: Record<string, Box>) {
   const logins: ImapFlowOptions["auth"][] = [];
+  const options: ImapFlowOptions[] = [];
   const box = (p: string) => boxes[p] ?? (() => { throw new Error(`no mailbox ${p}`); })();
   const factory = (opts: ImapFlowOptions): ImapClient => {
+    options.push(opts);
     let selected: string | undefined;
     const cur = () => box(selected ?? "");
     const client = {
@@ -65,7 +67,7 @@ function fakeServer(boxes: Record<string, Box>) {
     };
     return client as unknown as ImapClient;
   };
-  return { factory, logins };
+  return { factory, logins, options };
 }
 
 const inboxWith = (n: number): Box => ({
@@ -160,5 +162,17 @@ describe("imapMailbox", () => {
 
   it.each([["a b(c)", "a_b_c_"], ["ok-1", "ok-1"], ['q"\\*%', "q____"]])("toKeyword(%j) = %j", (l, k) => {
     expect(toKeyword(l)).toBe(k);
+  });
+
+  it.each([
+    ["requires STARTTLS without implicit TLS", { secure: false }, true, undefined],
+    ["leaves implicit TLS alone", { secure: true }, undefined, undefined],
+    ["allows plaintext only when asked (test servers)", { secure: false, allowPlaintext: true }, undefined, undefined],
+    ["passes the TLS name for a pinned address", { secure: true, servername: "imap.example.com" }, undefined, "imap.example.com"],
+  ])("%s", async (_name, over, doSTARTTLS, servername) => {
+    const s = fakeServer({ INBOX: inboxWith(0) });
+    await imapMailbox({ host: "h", port: 1, auth, ...over }, s.factory).open();
+    expect(s.options[0]!.doSTARTTLS).toBe(doSTARTTLS);
+    expect(s.options[0]!.servername).toBe(servername);
   });
 });

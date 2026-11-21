@@ -33,6 +33,8 @@ export interface RunDeps {
   pendingActions?: PendingActionQueue;
   /** AI spend so far in this run, stored on the run row so the daily budget sees it. */
   aiCostUsd?: () => number;
+  /** The panel's dry-run switch. It can only add to `dryRun` (the deployment's), never lift it. */
+  pausedInPanel?: () => Promise<boolean>;
   /** Runs inside the lock before any mail is read (migrations). */
   prepare?: () => Promise<void>;
 }
@@ -55,12 +57,14 @@ export function runMailbox(deps: RunDeps): Promise<RunResult | undefined> {
   return deps.lock.tryRun(() => runLocked(deps));
 }
 
-async function runLocked(deps: RunDeps): Promise<RunResult> {
+async function runLocked(given: RunDeps): Promise<RunResult> {
+  let deps = given;
   const started = deps.clock.now();
   const tally: Tally = { fetched: 0, handledByLogic: 0, sentToAi: 0, errors: [] };
   let aborted = false;
   try {
     await deps.prepare?.();
+    if (!deps.dryRun && (await deps.pausedInPanel?.())) deps = { ...deps, dryRun: true };
     await carryOutPending(deps, tally);
     await processMailbox(deps, tally);
   } catch (err) {

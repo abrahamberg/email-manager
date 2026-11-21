@@ -8,6 +8,10 @@ export interface ImapMailboxOptions {
   secure: boolean;
   auth: MailAuth;
   folders?: Partial<Folders>;
+  /** The certificate name when `host` is an IP the caller already resolved and checked. */
+  servername?: string;
+  /** Test servers only: allows a connection that never upgrades to TLS. */
+  allowPlaintext?: boolean;
 }
 
 /**
@@ -22,7 +26,7 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
   async function connection(): Promise<{ client: ImapClient; folders: Folders }> {
     if (!client?.usable) {
       // Fresh credentials on every connect, so an OAuth token refreshed by MailAuth is picked up.
-      const next = createClient({ host: options.host, port: options.port, secure: options.secure, auth: toAuth(await options.auth.credentials()) });
+      const next = createClient({ ...transport(options), auth: toAuth(await options.auth.credentials()) });
       await next.connect();
       client = next;
       folders = undefined;
@@ -94,6 +98,15 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
       if (c?.usable) await c.logout();
       else c?.close();
     },
+  };
+}
+
+// Why: without doSTARTTLS a man in the middle can strip the STARTTLS offer and read the password.
+function transport(o: ImapMailboxOptions) {
+  return {
+    host: o.host, port: o.port, secure: o.secure,
+    ...(o.servername && { servername: o.servername }),
+    ...(!o.secure && !o.allowPlaintext && { doSTARTTLS: true }),
   };
 }
 

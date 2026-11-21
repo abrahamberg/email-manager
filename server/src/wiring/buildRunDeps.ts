@@ -34,6 +34,7 @@ export function buildRunDeps(config: Config, db: Db, store: Store, over: RunOver
     runs: store.runs,
     clock: { now: () => new Date() },
     dryRun: config.DRY_RUN,
+    pausedInPanel: async () => (await store.settings.get())?.dryRun === true,
     classifier: ai.classifier,
     aiCostUsd: ai.costUsd,
     life: lifeDeps(config, store, ai, over.embedder ?? localEmbedder()),

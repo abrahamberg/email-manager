@@ -5,7 +5,7 @@ import { dailyBudget } from "../../src/ai/budget";
 import type { Send } from "../../src/ai/client";
 import { CLOSE_TAG, OPEN_TAG } from "../../src/ai/untrusted";
 import { TRIAGE_SYSTEM } from "../../src/ai/prompts";
-import { aiClassifier, triageSchema } from "../../src/ai/triage";
+import { aiClassifier, toTriage, triageSchema } from "../../src/ai/triage";
 import type { CompactEmail, TriageContext } from "../../src/ports";
 
 const fixture = (name: string): Anthropic.Message =>
@@ -91,5 +91,19 @@ describe("aiClassifier", () => {
     expect(text.slice(text.lastIndexOf(CLOSE_TAG))).not.toContain("attacker");
     expect(Object.keys(triageSchema.shape)).not.toEqual(expect.arrayContaining(["action"]));
     expect(JSON.stringify(t)).not.toMatch(/attacker|forward/);
+  });
+
+  it("caps every free-text field the model writes and drops untitled facts", () => {
+    const long = "x".repeat(5000);
+    const t = toTriage({
+      tier: "dontMiss", category: "question", needsReply: false, confidence: 1, why: long, need: long,
+      facts: [{ kind: "note", title: long, detail: long, place: long }, { kind: "note", title: "  ", detail: "" }],
+    }, context);
+    expect(t.why.length).toBeLessThanOrEqual(300);
+    expect(t.need!.length).toBeLessThanOrEqual(500);
+    expect(t.facts).toHaveLength(1);
+    expect(t.facts[0]!.title.length).toBeLessThanOrEqual(300);
+    expect(t.facts[0]!.detail.length).toBeLessThanOrEqual(500);
+    expect(t.facts[0]!.place!.length).toBeLessThanOrEqual(300);
   });
 });

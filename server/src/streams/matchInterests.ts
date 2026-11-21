@@ -1,4 +1,5 @@
 import type { Embedder } from "../ports";
+import { cosine } from "../search/cosine";
 import type { ExtractedItem } from "./splitItems";
 
 export const THRESHOLD = 0.45;
@@ -27,16 +28,6 @@ export interface Matches {
 }
 
 const STOP = new Set("with from your this that have will for and the new at in of to a an is are our you job jobs engineer developer senior junior remote".split(" "));
-
-export function cosine(a: number[], b: number[]): number {
-  let dot = 0, na = 0, nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i]! * b[i]!;
-    na += a[i]! ** 2;
-    nb += b[i]! ** 2;
-  }
-  return na && nb ? dot / Math.sqrt(na * nb) : 0;
-}
 
 const nearest = (v: number[], others: number[][]) => (others.length ? Math.max(...others.map((o) => cosine(v, o))) : 0);
 

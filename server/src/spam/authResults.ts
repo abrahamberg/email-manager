@@ -21,16 +21,19 @@ function stripComments(value: string): string {
   return value.replace(/\([^)]*\)/g, " ");
 }
 
+/** Why: the receiving server prepends its header; any lower one may have been written by the sender. */
+function topmost(value: string | undefined): string | undefined {
+  return value?.replace(/\n[ \t]+/g, " ").split("\n")[0];
+}
+
 export function parseAuthResults(headers: Email["headers"]): AuthResults {
   const result: AuthResults = { spf: "none", dkim: "none", dmarc: "none" };
-  const value = headers["authentication-results"];
-  if (!value) return result;
-  for (const line of value.split("\n")) {
-    const re = /(?:^|[;\s])(spf|dkim|dmarc)\s*=\s*([a-z]+)/gi;
-    for (const m of stripComments(line).matchAll(re)) {
-      const method = m[1]!.toLowerCase() as (typeof METHODS)[number];
-      result[method] = merge(result[method], toVerdict(m[2]!.toLowerCase()));
-    }
+  const line = topmost(headers["authentication-results"]);
+  if (!line) return result;
+  const re = /(?:^|[;\s])(spf|dkim|dmarc)\s*=\s*([a-z]+)/gi;
+  for (const m of stripComments(line).matchAll(re)) {
+    const method = m[1]!.toLowerCase() as (typeof METHODS)[number];
+    result[method] = merge(result[method], toVerdict(m[2]!.toLowerCase()));
   }
   return result;
 }

@@ -8,6 +8,7 @@ export type SmtpTransportOptions = {
   host: string;
   port: number;
   secure: boolean;
+  requireTLS: boolean;
   auth?: Record<string, string>;
 };
 
@@ -18,6 +19,8 @@ export interface SmtpConfig {
   from: string;
   auth: MailAuth;
   enabled: boolean;
+  /** Test servers only: allows sending without upgrading to TLS. */
+  allowPlaintext?: boolean;
   transportFactory?: (options: SmtpTransportOptions) => SmtpTransport;
 }
 
@@ -53,7 +56,9 @@ export function smtpSender(config: SmtpConfig): ReplySender {
       if (!enabled) throw new Error("Sending is disabled: v1 saves drafts only");
       validate(mail);
       const auth = toSmtpAuth(await config.auth.credentials());
-      const transport = transportFactory({ host: config.host, port: config.port, secure: config.secure, auth });
+      const transport = transportFactory({
+        host: config.host, port: config.port, secure: config.secure, requireTLS: !config.secure && !config.allowPlaintext, auth,
+      });
       await transport.sendMail({
         from: config.from,
         to: mail.to,

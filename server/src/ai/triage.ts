@@ -34,14 +34,19 @@ type ModelTriage = z.infer<typeof triageSchema>;
 
 const MAX_FACTS = 5;
 const MAX_MATTER = 60;
+const MAX_LINE = 300;
+const MAX_DETAIL = 500;
 const MAX_TOKENS = 1024;
 
 const isoDate = (s?: string) => (s && !Number.isNaN(Date.parse(s)) && /^\d{4}-\d{2}-\d{2}/.test(s) ? s : undefined);
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 const nonEmpty = (s?: string) => (s?.trim() ? s.trim() : undefined);
+const cap = (s: string, max: number) => s.trim().slice(0, max);
 
 function cleanFact(f: ModelTriage["facts"][number]): FactDraft {
-  return { kind: f.kind, title: f.title, detail: f.detail, at: isoDate(f.at), place: nonEmpty(f.place) };
+  return {
+    kind: f.kind, title: cap(f.title, MAX_LINE), detail: cap(f.detail, MAX_DETAIL), at: isoDate(f.at), place: nonEmpty(f.place)?.slice(0, MAX_LINE),
+  };
 }
 
 /** Never trust ids or sizes from the model: keep only what the context allows. */
@@ -52,12 +57,12 @@ export function toTriage(raw: ModelTriage, context: TriageContext): Triage {
     category: raw.category,
     areaId: knownArea ? raw.areaId : undefined,
     matter: nonEmpty(raw.matter)?.slice(0, MAX_MATTER),
-    need: nonEmpty(raw.need),
+    need: nonEmpty(raw.need)?.slice(0, MAX_DETAIL),
     deadline: isoDate(raw.deadline),
     needsReply: raw.needsReply,
-    facts: raw.facts.slice(0, MAX_FACTS).map(cleanFact),
+    facts: raw.facts.slice(0, MAX_FACTS).map(cleanFact).filter((f) => f.title),
     confidence: clamp01(raw.confidence),
-    why: raw.why,
+    why: cap(raw.why, MAX_LINE),
   };
 }
 

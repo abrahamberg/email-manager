@@ -27,6 +27,7 @@ describe("smtpSender", () => {
     const { sender, opts, sent } = setup();
     await sender.send({ ...mail, inReplyTo: "<1@x>", references: ["<0@x>", "<1@x>"] });
     expect(opts[0]?.auth).toEqual({ user: "u", pass: "p" });
+    expect(opts[0]?.requireTLS).toBe(true);
     expect(sent[0]).toMatchObject({ from: "bot@x.test", to: ["a@b.test"], inReplyTo: "<1@x>", references: ["<0@x>", "<1@x>"] });
   });
   it("uses OAuth2 credentials", async () => {
@@ -51,7 +52,7 @@ describe("smtpSender", () => {
 describe.skipIf(!process.env.GREENMAIL_HOST)("smtpSender with GreenMail", () => {
   it("delivers a message", async () => {
     const sender = smtpSender({
-      host: process.env.GREENMAIL_HOST!, port: 3025, secure: false, from: "bot@localhost", enabled: true,
+      host: process.env.GREENMAIL_HOST!, port: 3025, secure: false, allowPlaintext: true, from: "bot@localhost", enabled: true,
       auth: { credentials: async () => pw },
     });
     await expect(sender.send({ ...mail, to: ["rcpt@localhost"] })).resolves.toBeUndefined();

@@ -12,7 +12,8 @@ describe("parseAuthResults", () => {
     ["upper case and spacing", "MX;\n SPF = Pass ;\n DKIM=FAIL", ["pass", "fail", "none"]],
     ["comment ignored", "mx; dkim=fail (spf=pass in comment)", ["none", "fail", "none"]],
     ["pass among dkim signatures", "mx; dkim=fail header.d=a; dkim=pass header.d=b", ["none", "pass", "none"]],
-    ["multiple headers", "mx1; spf=pass\nmx2; dmarc=fail", ["pass", "none", "fail"]],
+    ["only the topmost header counts", "mx1; spf=pass\nmx2; dmarc=fail", ["pass", "none", "none"]],
+    ["a forged lower header cannot turn a fail into a pass", "mx; dmarc=fail\nforged; dmarc=pass", ["none", "none", "fail"]],
     ["header.d not mistaken", "mx; dkim=pass header.d=spf.example", ["none", "pass", "none"]],
   ];
   it.each(cases)("%s", (_n, header, [spf, dkim, dmarc]) => {
