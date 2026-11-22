@@ -69,14 +69,15 @@ No external library needed. Cheap, reliable signals:
 
 These go to a **digest** (one summary per day), not the trash.
 
-### 2.4 AI (Claude API)
+### 2.4 AI (OpenAI Responses API)
 
-- Official SDK `@anthropic-ai/sdk`.
-- **Triage** (category, priority, one-line reason) uses **Claude Haiku 5.5**
-  ($0.10 / $0.50 per million tokens), with structured JSON output validated by
-  a schema.
-- **Reply drafting** uses **Claude Sonnet 5.5** ($2 / $10), only for mail
-  triaged as `needs_reply`. Models are config values, so this can change.
+- Plain `fetch` to the Responses API behind a provider-neutral `Send`
+  (`server/src/ai/client.ts`, adapter `ai/openaiSend.ts`), so the provider can
+  change without touching callers. Key: `OPENAI_API_KEY`.
+- **Triage** and **reply drafting** both use **gpt-6-luna** ($0.10 / $0.50 per
+  million tokens, cached input $0.01), with structured JSON output validated by
+  zod and `reasoning.effort: none`. Models are config values
+  (`AI_TRIAGE_MODEL`, `AI_DRAFT_MODEL`).
 - Token economy:
   - Only mail that survived every logic step reaches the model.
   - `compactEmail()` sends plain text with quoted history, signatures, HTML and
@@ -97,7 +98,7 @@ types between API and UI, and the best IMAP/MIME libraries of any ecosystem.
 `zod` validates every boundary (config, rules, feeds, AI output, HTTP input).
 
 Runtime dependencies kept to: `imapflow`, `mailparser`, `nodemailer`,
-`@anthropic-ai/sdk`, `zod`, `hono` (tiny typed HTTP server), and the `postgres`
+`zod`, `hono` (tiny typed HTTP server), and the `postgres`
 driver for the cluster's shared Postgres (PGlite in tests).
 Tests: `vitest`. Frontend: React, Vite, TypeScript, no UI kit.
 
@@ -212,7 +213,7 @@ Email content is untrusted input and can contain prompt injection. So:
   ingress reach the public port from the oauth2-proxy alone. Middleware
   requires the header and checks it against `ALLOWED_EMAILS`. The internal run
   port is not exposed through the ingress and needs a shared token.
-- Secrets (IMAP password or OAuth token, Anthropic key, DQS key) come from a
+- Secrets (IMAP password or OAuth token, OpenAI key, DQS key) come from a
   Kubernetes Secret, never logged.
 - Container: distroless Node image, non-root, read-only root filesystem.
 - Stored data is minimal: headers, the compact text used for decisions,

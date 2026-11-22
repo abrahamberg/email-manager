@@ -42,7 +42,7 @@ const envSchema = z
     OAUTH_CLIENT_ID: optionalText,
     OAUTH_CLIENT_SECRET: optionalText,
     TOKEN_ENCRYPTION_KEY: encryptionKey.optional(),
-    ANTHROPIC_API_KEY: optionalText,
+    OPENAI_API_KEY: optionalText,
     RSPAMD_URL: z.url().optional(),
     DRY_RUN: bool.default(true),
     AI_DAILY_BUDGET_USD: z.coerce.number().nonnegative().default(0.5),

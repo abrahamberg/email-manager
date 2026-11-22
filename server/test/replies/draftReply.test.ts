@@ -19,18 +19,18 @@ describe("aiDrafter", () => {
     const send = replying({ text: "Ok", topic: "acknowledge", confidence: 0.5 });
     await draft(send);
     const params = send.mock.calls[0]![0];
-    expect((params.system as { text: string }[])[0]!.text).toBe(DRAFT_SYSTEM);
-    const user = params.messages[0]!.content as string;
+    expect(params.system).toBe(DRAFT_SYSTEM);
+    const user = params.user;
     expect(user.indexOf("Prefer mornings")).toBeLessThan(user.indexOf(OPEN_TAG));
     expect(user).toContain(CLOSE_TAG);
-    expect(params.tools).toBeUndefined();
+    expect(Object.keys(params)).not.toContain("tools");
   });
 
   it.each([
     ["invalid json", replying("not json")],
     ["schema mismatch", replying({ text: "x", topic: "wireMoney", confidence: 1 })],
     ["empty text", replying({ text: "  ", topic: "acknowledge", confidence: 1 })],
-    ["truncated", replying({ text: "x", topic: "acknowledge", confidence: 1 }, "max_tokens")],
+    ["truncated", replying({ text: "x", topic: "acknowledge", confidence: 1 }, "truncated")],
     ["refusal", replying({ text: "x", topic: "acknowledge", confidence: 1 }, "refusal")],
   ])("returns undefined on %s", async (_, send) => {
     expect(await draft(send)).toBeUndefined();

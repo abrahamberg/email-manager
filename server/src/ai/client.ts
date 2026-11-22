@@ -1,14 +1,31 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import type { z } from "zod";
+import { z } from "zod";
 import type { CompactEmail } from "../ports";
 import { type Budget, type TokenUsage, NO_USAGE, estimateCost } from "./budget";
 import { userTurn } from "./untrusted";
 
-export type Send = (params: Anthropic.MessageCreateParamsNonStreaming) => Promise<Anthropic.Message>;
+/** What every model provider is asked: no tools, one user turn, JSON matching `jsonSchema`. */
+export interface ModelRequest {
+  model: string;
+  system: string;
+  user: string;
+  maxTokens: number;
+  schemaName: string;
+  jsonSchema: Record<string, unknown>;
+}
 
-export function anthropicSend(client: Anthropic = new Anthropic()): Send {
-  return (params) => client.messages.create(params);
+export interface ModelReply {
+  text: string;
+  stop: "end" | "truncated" | "refusal";
+  usage: TokenUsage;
+}
+
+export type Send = (request: ModelRequest) => Promise<ModelReply>;
+
+/** Thrown by a Send adapter when the provider answers with an HTTP error. */
+export class ModelApiError extends Error {
+  constructor(readonly status: number) {
+    super(`model API status ${status}`);
+  }
 }
 
 export interface CallInput<S extends z.ZodType> {
@@ -31,29 +48,18 @@ interface Spend {
 
 export type CallResult<T> = ({ ok: true; value: T } | { ok: false; reason: FailReason; detail?: string }) & Spend;
 
-function usageOf(u: Anthropic.Usage): TokenUsage {
-  return {
-    inputTokens: u.input_tokens,
-    outputTokens: u.output_tokens,
-    cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
-    cacheReadTokens: u.cache_read_input_tokens ?? 0,
-  };
-}
-
-function request<S extends z.ZodType>(input: CallInput<S>): Anthropic.MessageCreateParamsNonStreaming {
-  const { type, schema } = zodOutputFormat(input.schema);
+function request<S extends z.ZodType>(input: CallInput<S>): ModelRequest {
   return {
     model: input.model,
-    max_tokens: input.maxTokens,
-    // Sampling params are rejected by the current API version; low effort keeps output terse and cheap.
-    output_config: { effort: "low", format: { type, schema } },
-    system: [{ type: "text", text: input.system, cache_control: { type: "ephemeral" } }],
-    messages: [{ role: "user", content: userTurn(input.user.task, input.user.email) }],
+    system: input.system,
+    user: userTurn(input.user.task, input.user.email),
+    maxTokens: input.maxTokens,
+    schemaName: "result",
+    jsonSchema: z.toJSONSchema(input.schema) as Record<string, unknown>,
   };
 }
 
-function parseOutput<S extends z.ZodType>(message: Anthropic.Message, schema: S): { value: z.infer<S> } | undefined {
-  const text = message.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+function parseOutput<S extends z.ZodType>(text: string, schema: S): { value: z.infer<S> } | undefined {
   try {
     const result = schema.safeParse(JSON.parse(text));
     return result.success ? { value: result.data } : undefined;
@@ -66,22 +72,20 @@ function parseOutput<S extends z.ZodType>(message: Anthropic.Message, schema: S)
 export async function structuredCall<S extends z.ZodType>(input: CallInput<S>): Promise<CallResult<z.infer<S>>> {
   if (!(await input.budget.allows())) return { ok: false, reason: "budget", usage: NO_USAGE, costUsd: 0 };
 
-  let message: Anthropic.Message;
+  let reply: ModelReply;
   try {
-    message = await input.send(request(input));
+    reply = await input.send(request(input));
   } catch (error) {
-    const detail = error instanceof Anthropic.APIError ? `status ${error.status}` : "request failed";
+    const detail = error instanceof ModelApiError ? `status ${error.status}` : "request failed";
     return { ok: false, reason: "api_error", detail, usage: NO_USAGE, costUsd: 0 };
   }
 
-  const usage = usageOf(message.usage);
-  const costUsd = estimateCost(input.model, usage);
+  const costUsd = estimateCost(input.model, reply.usage);
   input.budget.record(costUsd);
-  const spend = { usage, costUsd };
+  const spend = { usage: reply.usage, costUsd };
 
-  if (message.stop_reason === "refusal") return { ok: false, reason: "refusal", ...spend };
-  if (message.stop_reason === "max_tokens") return { ok: false, reason: "truncated", ...spend };
-  const parsed = parseOutput(message, input.schema);
+  if (reply.stop !== "end") return { ok: false, reason: reply.stop, ...spend };
+  const parsed = parseOutput(reply.text, input.schema);
   if (!parsed) return { ok: false, reason: "invalid_output", ...spend };
   return { ok: true, value: parsed.value, ...spend };
 }

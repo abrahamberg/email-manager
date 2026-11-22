@@ -8,7 +8,6 @@
     "build": "esbuild src/main.ts src/worker.ts --bundle --platform=node --format=esm --target=node22 --outdir=dist --external:@huggingface/transformers"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.12.0",
     "@email-manager/shared": "*",
     "@hono/node-server": "^2.1.11",
     "@huggingface/transformers": "^4.3.2",

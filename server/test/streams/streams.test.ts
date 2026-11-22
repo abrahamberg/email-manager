@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
-import type Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import { dailyBudget } from "../../src/ai/budget";
-import type { Send } from "../../src/ai/client";
+import type { ModelReply, Send } from "../../src/ai/client";
 import { parseEmail } from "../../src/mail/parseEmail";
 import type { Embedder } from "../../src/ports";
 import { detectStream } from "../../src/streams/detectStream";
@@ -14,12 +13,11 @@ import { splitItems } from "../../src/streams/splitItems";
 const load = (n: string) => parseEmail(1, readFileSync(new URL(`../fixtures/${n}.eml`, import.meta.url)));
 const budget = () => dailyBudget({ limitUsd: 1, spentToday: async () => 0 });
 
-const recorded = (items: unknown[]): Anthropic.Message =>
-  ({
-    id: "msg_1", type: "message", role: "assistant", model: "m", stop_reason: "end_turn", stop_sequence: null,
-    content: [{ type: "text", text: JSON.stringify({ items }) }],
-    usage: { input_tokens: 300, output_tokens: 80 },
-  }) as unknown as Anthropic.Message;
+const recorded = (items: unknown[]): ModelReply => ({
+  text: JSON.stringify({ items }),
+  stop: "end",
+  usage: { inputTokens: 300, outputTokens: 80, cacheWriteTokens: 0, cacheReadTokens: 0 },
+});
 
 describe("detectStream", () => {
   it("needs a bulk list/noreply sender and 3 messages", async () => {
@@ -58,7 +56,7 @@ describe("splitItems", () => {
 });
 
 describe("aiExtract", () => {
-  const run = async (message: Anthropic.Message) => {
+  const run = async (message: ModelReply) => {
     const send = vi.fn<Send>(async () => message);
     const items = await aiExtract(await load("newsletter-with-list-unsubscribe"), { send, budget: budget(), model: "m" });
     return { send, items };
@@ -68,7 +66,7 @@ describe("aiExtract", () => {
     const many = Array.from({ length: 25 }, (_, i) => ({ title: `T${i}`, facts: ["a", "b", "c", "d"], closes: "2026-12-01" }));
     const { send, items } = await run(recorded(many));
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send.mock.calls[0]![0].messages[0]!.content).toContain("<untrusted_email>");
+    expect(send.mock.calls[0]![0].user).toContain("<untrusted_email>");
     expect(items).toHaveLength(20);
     expect(items[0]).toEqual({ title: "T0", facts: ["a", "b", "c"], closes: "2026-12-01" });
   });

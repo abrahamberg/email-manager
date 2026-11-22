@@ -1,13 +1,12 @@
 import { readFileSync } from "node:fs";
-import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { dailyBudget } from "../../src/ai/budget";
-import { type Send, structuredCall } from "../../src/ai/client";
+import { type ModelReply, ModelApiError, type Send, structuredCall } from "../../src/ai/client";
 import { aiModels, priceOf } from "../../src/ai/models";
 import { CLOSE_TAG, OPEN_TAG } from "../../src/ai/untrusted";
 
-const fixture = (name: string): Anthropic.Message =>
+const fixture = (name: string): ModelReply =>
   JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8"));
 
 const schema = z.object({
@@ -60,7 +59,7 @@ describe("structuredCall", () => {
 
   it("turns an API error into ok:false", async () => {
     const send = vi.fn<Send>(async () => {
-      throw new Anthropic.APIError(529, undefined, "overloaded", new Headers());
+      throw new ModelApiError(529);
     });
     expect(await call(send)).toMatchObject({ ok: false, reason: "api_error", detail: "status 529", costUsd: 0 });
   });
@@ -71,16 +70,15 @@ describe("structuredCall", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("caches the system prompt, exposes no tools and quotes the email as untrusted data", async () => {
+  it("sends the system prompt apart, asks for the schema and quotes the email as untrusted data", async () => {
     const send = replay("valid");
     await call(send);
     const params = send.mock.calls[0]![0];
-    expect(params.tools).toBeUndefined();
-    expect(params.tool_choice).toBeUndefined();
-    expect(params.output_config?.format?.type).toBe("json_schema");
-    expect(params.system).toEqual([{ type: "text", text: "Classify the email.", cache_control: { type: "ephemeral" } }]);
+    expect(Object.keys(params).sort()).toEqual(["jsonSchema", "maxTokens", "model", "schemaName", "system", "user"]);
+    expect(params.jsonSchema).toMatchObject({ type: "object", required: ["tier", "why", "confidence"] });
+    expect(params.system).toBe("Classify the email.");
 
-    const user = params.messages[0]!.content as string;
+    const user = params.user;
     const open = user.indexOf(OPEN_TAG);
     const close = user.indexOf(CLOSE_TAG);
     expect(user.indexOf("Return the tier.")).toBeLessThan(open);

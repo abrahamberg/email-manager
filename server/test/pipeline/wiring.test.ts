@@ -40,7 +40,7 @@ describe("AI wiring", () => {
   });
 
   it("builds every AI part when a key is set", () => {
-    const ai = aiFromConfig({ ...imap, ANTHROPIC_API_KEY: "k", AI_DAILY_BUDGET_USD: 1 }, async () => 0, async () => { throw new Error("no calls in tests"); });
+    const ai = aiFromConfig({ ...imap, OPENAI_API_KEY: "k", AI_DAILY_BUDGET_USD: 1 }, async () => 0, async () => { throw new Error("no calls in tests"); });
     expect(ai.classifier && ai.drafter && ai.writeWhy).toBeTruthy();
     expect(ai.costUsd()).toBe(0);
   });

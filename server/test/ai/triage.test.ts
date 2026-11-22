@@ -1,14 +1,13 @@
 import { readFileSync } from "node:fs";
-import type Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import { dailyBudget } from "../../src/ai/budget";
-import type { Send } from "../../src/ai/client";
+import type { ModelReply, Send } from "../../src/ai/client";
 import { CLOSE_TAG, OPEN_TAG } from "../../src/ai/untrusted";
 import { TRIAGE_SYSTEM } from "../../src/ai/prompts";
 import { aiClassifier, toTriage, triageSchema } from "../../src/ai/triage";
 import type { CompactEmail, TriageContext } from "../../src/ports";
 
-const fixture = (name: string): Anthropic.Message =>
+const fixture = (name: string): ModelReply =>
   JSON.parse(readFileSync(new URL(`./fixtures/${name}.json`, import.meta.url), "utf8"));
 const replay = (name: string) => vi.fn<Send>(async () => fixture(name));
 const budget = (limitUsd = 1) => dailyBudget({ limitUsd, spentToday: async () => 0 });
@@ -27,7 +26,7 @@ const context: TriageContext = {
 };
 
 const classify = (send: Send, e = email, b = budget()) => aiClassifier({ send, budget: b, model: "triage-model" }).triage(e, context);
-const userText = (send: ReturnType<typeof replay>) => send.mock.calls[0]![0].messages[0]!.content as string;
+const userText = (send: ReturnType<typeof replay>) => send.mock.calls[0]![0].user;
 
 describe("aiClassifier", () => {
   it("maps a valid recorded response", async () => {
@@ -53,7 +52,7 @@ describe("aiClassifier", () => {
     const text = userText(send);
     expect(text.indexOf("Elsa has a nut allergy")).toBeLessThan(text.indexOf(OPEN_TAG));
     const request = send.mock.calls[0]![0];
-    expect(request.system).toEqual([{ type: "text", text: TRIAGE_SYSTEM, cache_control: { type: "ephemeral" } }]);
+    expect(request.system).toBe(TRIAGE_SYSTEM);
   });
 
   it("drops an unknown areaId and clamps sizes, dates and confidence", async () => {
