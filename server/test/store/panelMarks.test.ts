@@ -9,6 +9,9 @@ const tablesIn = async (db: ReturnType<typeof pgliteDb>) =>
   (await db.query<{ tablename: string }>(
     "SELECT tablename FROM pg_tables WHERE tablename = ANY($1) ORDER BY tablename", [PANEL_TABLES])).map((r) => r.tablename);
 
+// Each of the two tests below builds its own PGlite and migrates it, which is slow beside a busy suite.
+const OWN_DB_TIMEOUT = 30_000;
+
 describe("003_panel_marks", () => {
   const db = useFreshDb();
 
@@ -28,7 +31,7 @@ describe("003_panel_marks", () => {
     } finally {
       await old.close();
     }
-  });
+  }, OWN_DB_TIMEOUT);
 
   it("backfills the source folder of actions queued before it existed", async () => {
     const old = pgliteDb();
@@ -48,5 +51,5 @@ describe("003_panel_marks", () => {
     } finally {
       await old.close();
     }
-  });
+  }, OWN_DB_TIMEOUT);
 });
