@@ -134,6 +134,8 @@ export interface OutcomeRecord {
   tier?: Tier;
   dryRun: boolean;
   at: string;
+  /** The mailbox the message was read from, so a later undo acts on the same one. */
+  mailboxId?: string;
 }
 
 export interface OutcomeLog {
@@ -158,6 +160,7 @@ export interface SenderHistory {
   recordReceived(address: string): Promise<void>;
 }
 
+/** One per mailbox: UIDs and UIDVALIDITY only mean something within their own mailbox. */
 export interface MailboxCursor {
   get(): Promise<MailboxState | undefined>;
   set(state: MailboxState): Promise<void>;

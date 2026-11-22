@@ -22,7 +22,7 @@ describe("003_panel_marks", () => {
       await migrate(old, migrations.slice(0, 2));
       await old.exec("CREATE TABLE receipt_marks (receipt_id text PRIMARY KEY, undone boolean NOT NULL DEFAULT false, taught text, at timestamptz NOT NULL DEFAULT now())");
       await old.query("INSERT INTO receipt_marks (receipt_id, undone) VALUES ('rc-a-junk', true)");
-      expect(await migrate(old)).toEqual(["003_panel_marks"]);
+      expect(await migrate(old, migrations.slice(0, 3))).toEqual(["003_panel_marks"]);
       expect(await old.query("SELECT 1 FROM receipt_marks WHERE receipt_id = 'rc-a-junk'")).toHaveLength(1);
       expect(await tablesIn(old)).toEqual(PANEL_TABLES);
     } finally {
@@ -39,7 +39,7 @@ describe("003_panel_marks", () => {
       await old.exec(`INSERT INTO outcomes (message_id, uid, outcome, signal, reason, dry_run, at) VALUES
         ('<j@x>', 1, 'junk', 'spam', 'r', false, now()), ('<d@x>', 2, 'digest', 'rule', 'r', false, now())`);
       await old.exec("INSERT INTO pending_mailbox_actions (message_id, uid, action) VALUES ('<j@x>', 1, 'move_to_inbox'), ('<d@x>', 2, 'move_to_inbox')");
-      await migrate(old);
+      await migrate(old, migrations.slice(0, 3));
       const rows = await old.query("SELECT message_id, from_folder, attempts FROM pending_mailbox_actions ORDER BY id");
       expect(rows).toEqual([
         { message_id: "<j@x>", from_folder: "junk", attempts: 0 },

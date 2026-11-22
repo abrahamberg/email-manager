@@ -207,14 +207,28 @@ Email content is untrusted input and can contain prompt injection. So:
 ```
 
 - The CronJob runs the worker from the same image. State lives in the shared
-  Postgres, so there is no volume to share.
+  Postgres. A small RWX volume is mounted at `DATA_DIR` (default `/data`) in
+  both the Deployment and the CronJob; it holds only the instance keys.
 - A run takes a Postgres advisory lock, so overlapping runs do nothing.
 - **Auth:** the app trusts the user header only because a NetworkPolicy lets
   ingress reach the public port from the oauth2-proxy alone. Middleware
   requires the header and checks it against `ALLOWED_EMAILS`. The internal run
   port is not exposed through the ingress and needs a shared token.
-- Secrets (IMAP password or OAuth token, OpenAI key, DQS key) come from a
-  Kubernetes Secret, never logged.
+- **Secrets:** the deployment needs only `DATABASE_URL` and `OPENAI_API_KEY`
+  from a Kubernetes Secret (`ALLOWED_EMAILS` and `PUBLIC_URL` are plain
+  config). Mailboxes are added in the panel's Set up page, as many as wanted,
+  of any provider (IMAP, Office 365, Gmail). Their IMAP passwords, OAuth client
+  secrets and refresh tokens are stored in Postgres sealed with AES-256-GCM.
+  The key (`token-encryption-key`) and the internal run token
+  (`internal-token`) are created once on the data volume and never replaced:
+  losing the key makes stored secrets unreadable, so back the volume up.
+  `TOKEN_ENCRYPTION_KEY` / `INTERNAL_TOKEN` in env override the files.
+  Nothing secret is logged or returned to the panel.
+- **Several mailboxes:** a run takes the one global lock and reads each enabled
+  mailbox in turn, each with its own cursor (UIDVALIDITY) and undo queue. A
+  mailbox that fails is noted on the run and the others still run. Outcomes,
+  messages and queued undos record their mailbox, so undo and drafts go back to
+  the mailbox the email came from.
 - Container: distroless Node image, non-root, read-only root filesystem.
 - Stored data is minimal: headers, the compact text used for decisions,
   summaries and the activity log. Full bodies stay in the mailbox.

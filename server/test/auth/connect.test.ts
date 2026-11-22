@@ -4,22 +4,23 @@ import { s256Challenge } from "../../src/mail/auth/pkce.js";
 import { openGrant } from "../../src/mail/auth/tokenStore.js";
 import { fakeIdToken, fakeTokenEndpoint, key, memoryTokenStore } from "./fakes.js";
 
+const MAILBOX = "0b7c6a52-6f0e-4c39-9d0a-1f4e2b3c4d5e";
+
 function setup(responses: { status?: number; body: unknown }[] = []) {
   const store = memoryTokenStore();
   const endpoint = fakeTokenEndpoint(responses);
+  const providerOf: Record<string, "gmail" | "office365"> = { [MAILBOX]: "gmail", "mb-o365": "office365" };
   const app = connectRoutes({
     publicUrl: "https://mail.example.org",
-    clientId: "cid",
-    clientSecret: "secret",
+    client: async (id) => providerOf[id] && { provider: providerOf[id], clientId: "cid", clientSecret: "secret", tokenStore: store },
     encryptionKey: key,
-    tokenStore: store,
     fetchImpl: endpoint.impl,
   });
   return { app, store, endpoint };
 }
 
-async function start(app: ReturnType<typeof connectRoutes>, provider = "gmail") {
-  const res = await app.request(`/api/connect/${provider}/start`);
+async function start(app: ReturnType<typeof connectRoutes>, provider = "gmail", mailbox = provider === "gmail" ? MAILBOX : "mb-o365") {
+  const res = await app.request(`/api/connect/${provider}/start?mailbox=${mailbox}`);
   const location = new URL(res.headers.get("location")!);
   const cookie = res.headers.get("set-cookie")!;
   return { res, location, cookie: cookie.split(";")[0]!, rawCookie: cookie };
@@ -88,4 +89,17 @@ describe("connect routes", () => {
   it("returns 404 for an unknown provider", async () => {
     expect((await setup().app.request(`/api/connect/yahoo/start`)).status).toBe(404);
   });
+
+  it("carries the mailbox in the state and uses that mailbox's client id", async () => {
+    const { location } = await start(setup().app);
+    expect(location.searchParams.get("state")!.startsWith(`${MAILBOX}~`)).toBe(true);
+    expect(location.searchParams.get("client_id")).toBe("cid");
+  });
+
+  it.each([["an unknown mailbox", "gmail", "nope"], ["a mailbox of another provider", "office365", MAILBOX]])(
+    "refuses to start for %s", async (_n, provider, mailbox) => {
+      const res = await setup().app.request(`/api/connect/${provider}/start?mailbox=${mailbox}`);
+      expect(res.status).toBe(409);
+      expect(res.headers.get("set-cookie")).toBeNull();
+    });
 });

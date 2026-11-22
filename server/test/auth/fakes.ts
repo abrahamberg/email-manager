@@ -10,7 +10,7 @@ export function memoryTokenStore(): TokenStore & { saved: { blob: string; expire
     async load() {
       return store.blob;
     },
-    async save(_p: string, blob: string, expiresAt: string) {
+    async save(blob: string, expiresAt: string) {
       store.blob = blob;
       store.saved.push({ blob, expiresAt });
     },

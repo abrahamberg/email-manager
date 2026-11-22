@@ -13,7 +13,7 @@ describe("migrate", () => {
     const bad = [{ id: "999_bad", sql: "CREATE TABLE t_ok (x int); SELECT nope FROM missing;" }];
     await expect(migrate(db(), bad)).rejects.toThrow();
     const ids = await db().query<{ id: string }>("SELECT id FROM schema_migrations");
-    expect(ids.map((r) => r.id)).toEqual(["001_init", "002_phase2", "003_panel_marks"]);
+    expect(ids.map((r) => r.id)).toEqual(["001_init", "002_phase2", "003_panel_marks", "004_mailboxes"]);
     expect(await db().query("SELECT 1 FROM pg_tables WHERE tablename = 't_ok'")).toHaveLength(0);
   });
 

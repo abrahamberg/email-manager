@@ -1,92 +1,63 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api";
-import { failureText, type ImapDetails, type SetupChoice, type SetupStatus, type SetupTarget } from "../../api/setupApi";
-import { Button, Chip } from "../../components/ui";
+import type { MailboxView, SetupStatus, SetupTarget } from "../../api/setupApi";
+import { Button } from "../../components/ui";
+import { MailboxEditor, type Editing } from "./MailboxEditor";
+import { MailboxList, outcomeOf, type Outcome } from "./MailboxList";
 import { Step, StepFooter, type StepProps } from "./StepParts";
-import { CHOICES, targetFor } from "./target";
-
-export interface ConnectState {
-  choice: SetupChoice;
-  imap: ImapDetails;
-}
+import { emptyForm, formFrom } from "./target";
 
 interface Props extends StepProps {
-  state: ConnectState;
-  onChange: (state: ConnectState) => void;
   onTarget: (target: SetupTarget | undefined) => void;
 }
 
-type Outcome = { tone: "ok" | "warn"; text: string } | undefined;
-
-function ChoiceList({ state, onChange }: Pick<Props, "state" | "onChange">) {
-  return (
-    <div className="choices">
-      {CHOICES.map((c) => (
-        <label key={c.id} className="choice" data-selected={c.id === state.choice}>
-          <input type="radio" name="mailbox" checked={c.id === state.choice} onChange={() => onChange({ ...state, choice: c.id })} />
-          <span><strong>{c.label}</strong><span className="muted small block">{c.hint}</span></span>
-          <span />
-        </label>
-      ))}
-    </div>
-  );
-}
-
-function ImapForm({ state, onChange }: Pick<Props, "state" | "onChange">) {
-  const set = (patch: Partial<ImapDetails>) => onChange({ ...state, imap: { ...state.imap, ...patch } });
-  const { imap } = state;
-  return (
-    <div className="form-grid">
-      <label>IMAP server<input value={imap.host} onChange={(e) => set({ host: e.target.value })} autoComplete="off" /></label>
-      <label>Port<input type="number" value={imap.port} onChange={(e) => set({ port: Number(e.target.value) })} /></label>
-      <label>User name<input value={imap.user} onChange={(e) => set({ user: e.target.value })} autoComplete="off" /></label>
-      <label>Password<input type="password" value={imap.password} onChange={(e) => set({ password: e.target.value })} autoComplete="off" /></label>
-    </div>
-  );
-}
-
-function OAuthSignIn({ choice, status }: { choice: "office365" | "gmail"; status: SetupStatus | undefined }) {
-  if (!status?.oauthEnabled) return <p className="muted small">Sign-in with {choice === "gmail" ? "Google" : "Microsoft"} is not set up on this deployment.</p>;
-  return (
-    <div className="row">
-      <a className="button" href={`/api/connect/${choice}/start`}>Sign in</a>
-      {status.connected[choice] && <Chip tone="ok">Signed in</Chip>}
-    </div>
-  );
-}
-
-export function ConnectStep({ onNext, state, onChange, onTarget }: Props) {
+export function ConnectStep({ onNext, onTarget }: Props) {
   const [status, setStatus] = useState<SetupStatus>();
-  const [outcome, setOutcome] = useState<Outcome>();
+  const [mailboxes, setMailboxes] = useState<MailboxView[]>();
+  const [editing, setEditing] = useState<Editing>();
+  const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [busy, setBusy] = useState(false);
-  useEffect(() => { void api.setup.status().then(setStatus).catch(() => undefined); }, []);
 
-  const target = targetFor(state.choice, state.imap);
-  const change = (next: ConnectState) => { setOutcome(undefined); onTarget(undefined); onChange(next); };
+  const reload = () => api.setup.mailboxes().then(setMailboxes).catch(() => setMailboxes([]));
+  useEffect(() => {
+    void api.setup.status().then(setStatus).catch(() => undefined);
+    void reload();
+  }, []);
+  useEffect(() => {
+    if (mailboxes?.length === 0 && !editing) setEditing({ form: emptyForm() });
+  }, [mailboxes, editing]);
 
-  async function test() {
-    if (!target) return;
+  async function test(m: MailboxView) {
     setBusy(true);
     try {
-      const result = await api.setup.test(target);
-      setOutcome(result.ok ? { tone: "ok", text: "Connected · read-only for now" } : { tone: "warn", text: failureText(result.error) });
-      onTarget(result.ok ? target : undefined);
+      const result = await api.setup.test({ mailboxId: m.id });
+      setOutcomes((o) => ({ ...o, [m.id]: outcomeOf(result) }));
+      if (result.ok) onTarget({ mailboxId: m.id });
     } catch {
-      setOutcome({ tone: "warn", text: "The test failed. Try again." });
+      setOutcomes((o) => ({ ...o, [m.id]: { tone: "warn", text: "The test failed. Try again." } }));
     } finally {
       setBusy(false);
     }
   }
 
+  async function remove(m: MailboxView) {
+    if (!window.confirm(`Remove ${m.label}? Its saved password or sign-in is deleted.`)) return;
+    await api.setup.removeMailbox(m.id);
+    onTarget(undefined);
+    await reload();
+  }
+
+  const saved = async () => { setEditing(undefined); await reload(); };
+  const tested = Object.values(outcomes).some((o) => o?.tone === "ok");
+
   return (
-    <Step title="Connect your mailbox" hint="The password for another server is used for the checks only. It is not stored in the browser or saved by the panel.">
-      <ChoiceList state={state} onChange={change} />
-      {state.choice === "imap" ? <ImapForm state={state} onChange={change} /> : <OAuthSignIn choice={state.choice} status={status} />}
-      <div className="row">
-        <Button onClick={test} disabled={!target || busy}>Test connection</Button>
-        {outcome && <Chip tone={outcome.tone}>{outcome.text}</Chip>}
-      </div>
-      <StepFooter onNext={onNext} disabled={outcome?.tone !== "ok"} />
+    <Step title="Connect your mailboxes" hint="Add each mailbox you want handled. Passwords and client secrets are stored encrypted on the server and never shown again.">
+      {mailboxes && <MailboxList mailboxes={mailboxes} status={status} outcomes={outcomes} busy={busy} onTest={test}
+        onEdit={(m) => setEditing({ id: m.id, form: formFrom(m), view: m })} onRemove={remove} />}
+      {editing
+        ? <MailboxEditor editing={editing} onChange={setEditing} onSaved={saved} onCancel={mailboxes?.length ? () => setEditing(undefined) : undefined} />
+        : <div className="row"><Button onClick={() => setEditing({ form: emptyForm() })}>Add a mailbox</Button></div>}
+      <StepFooter onNext={onNext} disabled={!tested} />
     </Step>
   );
 }

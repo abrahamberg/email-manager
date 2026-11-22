@@ -19,7 +19,7 @@ describe("port repos", () => {
   });
 
   it("stores the mailbox cursor, beyond 32-bit uids", async () => {
-    const c = cursorRepo(db());
+    const c = cursorRepo(db(), "mb-1");
     expect(await c.get()).toBeUndefined();
     await c.set({ uidValidity: 4_294_967_295, uidNext: 10 });
     await c.set({ uidValidity: 4_294_967_295, uidNext: 11 });

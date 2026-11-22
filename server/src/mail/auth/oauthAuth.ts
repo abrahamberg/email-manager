@@ -31,14 +31,14 @@ export function oauthAuth(
     const expiresAt = clock() + token.expires_in * 1000;
     if (token.refresh_token && token.refresh_token !== grant.refreshToken) {
       const rotated: StoredGrant = { user: grant.user, refreshToken: token.refresh_token };
-      await tokenStore.save(providerId, sealGrant(rotated, encryptionKey), new Date(expiresAt).toISOString());
+      await tokenStore.save(sealGrant(rotated, encryptionKey), new Date(expiresAt).toISOString());
     }
     cached = { user: grant.user, accessToken: token.access_token, expiresAt };
     return { kind: "oauth", user: grant.user, accessToken: token.access_token };
   }
 
   async function loadGrant(): Promise<StoredGrant> {
-    const blob = await tokenStore.load(providerId);
+    const blob = await tokenStore.load();
     if (!blob) throw new ReconnectNeededError(providerId);
     return openGrant(blob, encryptionKey);
   }

@@ -16,3 +16,10 @@ npm install
 npm run dev     # http://localhost:5173
 npm test
 ```
+
+## Deploying
+
+The server and the worker CronJob read only two secrets from env: `DATABASE_URL` and `OPENAI_API_KEY`.
+Plain config: `ALLOWED_EMAILS`, and `PUBLIC_URL` for Office 365 / Gmail sign-in. Mount one RWX volume at
+`/data` (or set `DATA_DIR`) in both; the instance keys are created there on first start. Add mailboxes in
+the panel under Set up. See the secrets notes in [docs/design.md](docs/design.md#35-deployment-on-kubernetes).

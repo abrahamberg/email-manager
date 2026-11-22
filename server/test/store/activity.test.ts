@@ -41,8 +41,9 @@ describe("activity repos", () => {
     expect(near.map((n) => n.ownerId)).toEqual(["a", "b"]);
   });
 
-  it("stores only ciphertext for tokens", async () => {
+  it("stores only ciphertext for tokens, one grant per mailbox", async () => {
     const t = tokenRepo(db());
+    await db().query("INSERT INTO mailboxes (id, label, provider) VALUES ('office365', 'W', 'office365')");
     await t.save("office365", { ciphertext: "enc:abc", expiresAt: "2026-01-01T01:00:00.000Z" });
     expect(await t.get("office365")).toEqual({ ciphertext: "enc:abc", expiresAt: "2026-01-01T01:00:00.000Z" });
     await t.remove("office365");

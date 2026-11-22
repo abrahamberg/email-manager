@@ -14,12 +14,14 @@ const Row = z.object({
 const toAction = (r: z.infer<typeof Row>): PendingAction =>
   ({ id: r.id, messageId: r.message_id, action: r.action, from: r.from_folder, attempts: r.attempts });
 
-export function pendingActionRepo(db: Db): PendingActionQueue {
+/** Bound to one mailbox; rows without a mailbox (queued before mailboxes existed) are never due. */
+export function pendingActionRepo(db: Db, mailboxId: string): PendingActionQueue {
   return {
     async due() {
       const rows = await db.query<unknown>(
-        "SELECT id, message_id, action, from_folder, attempts FROM pending_mailbox_actions WHERE done_at IS NULL AND attempts < $1 ORDER BY id",
-        [MAX_ATTEMPTS]);
+        `SELECT id, message_id, action, from_folder, attempts FROM pending_mailbox_actions
+         WHERE mailbox_id = $2 AND done_at IS NULL AND attempts < $1 ORDER BY id`,
+        [MAX_ATTEMPTS, mailboxId]);
       return rows.flatMap((r) => {
         const parsed = Row.safeParse(r);
         return parsed.success ? [toAction(parsed.data)] : [];

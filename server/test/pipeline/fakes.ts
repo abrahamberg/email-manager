@@ -6,7 +6,8 @@ import type {
   SenderStats, SpamCheck, SpamVerdict, Triage,
 } from "../../src/ports";
 import type { Rule } from "../../src/rules/Rule";
-import type { RunDeps } from "../../src/pipeline/runMailbox";
+import type { PendingAction, PendingActionQueue, Settlement } from "../../src/pipeline/pendingActions";
+import type { MailboxSource, RunDeps } from "../../src/pipeline/runMailbox";
 
 export function fixture(name: string): Uint8Array {
   return readFileSync(fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url)));
@@ -91,12 +92,21 @@ export function ruleFor(from: string, then: Rule["then"]): Rule {
   return { id: "r1", source: "user", when: [{ field: "from", operator: "contains", value: from }], then, priority: 0, status: "active" };
 }
 
-export function runDeps(over: Partial<RunDeps> & Pick<RunDeps, "mailbox">) {
+/** One mailbox by default; pass `mailboxes` to run several. */
+export interface SingleMailbox {
+  mailbox: Mailbox;
+  cursor?: MailboxCursor;
+  pendingActions?: PendingActionQueue;
+}
+
+export function runDeps(over: Partial<RunDeps> & SingleMailbox) {
   const outcomes = fakeOutcomes();
   const runs: Run[] = [];
+  const { mailbox, cursor, pendingActions, ...rest } = over;
+  const source: MailboxSource = { id: "mb-1", mailbox, cursor: cursor ?? fakeCursor(), pendingActions };
   const deps: RunDeps = {
     lock: fakeLock(),
-    cursor: fakeCursor(),
+    mailboxes: async () => [source],
     outcomes: outcomes.log,
     rules: { activeRules: async () => [] },
     senders: fakeSenders(),
@@ -104,7 +114,16 @@ export function runDeps(over: Partial<RunDeps> & Pick<RunDeps, "mailbox">) {
     runs: { save: async (r) => void runs.push(r) },
     clock,
     dryRun: false,
-    ...over,
+    ...rest,
   };
   return { deps, records: outcomes.records, runs };
+}
+
+export function fakeQueue(actions: PendingAction[]) {
+  const settled: [number, Settlement][] = [];
+  const queue: PendingActionQueue = {
+    due: async () => actions,
+    settle: async (id, s) => void settled.push([id, s]),
+  };
+  return { queue, settled };
 }

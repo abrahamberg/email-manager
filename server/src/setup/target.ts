@@ -31,7 +31,9 @@ export const ImapTarget = z.object({
 
 export type ImapTarget = z.infer<typeof ImapTarget>;
 
-export const OAuthTarget = z.object({ provider: z.enum(["office365", "gmail"]) }).strict();
+/** A mailbox already saved in the panel: its stored settings and secrets are used. */
+export const SavedTarget = z.object({ mailboxId: z.string().trim().min(1).max(64) }).strict();
 
-export const SetupTarget = z.discriminatedUnion("provider", [ImapTarget, OAuthTarget]);
+/** An unsaved IMAP login to try before saving, or a saved mailbox of any provider. */
+export const SetupTarget = z.union([ImapTarget, SavedTarget]);
 export type SetupTarget = z.infer<typeof SetupTarget>;

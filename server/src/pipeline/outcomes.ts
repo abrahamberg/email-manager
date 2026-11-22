@@ -60,6 +60,8 @@ export function ruleDecision(action: Action, ruleId: string): Decision {
 
 export interface ApplyDeps {
   mailbox: Mailbox;
+  /** Recorded with the outcome, so undo later acts on the mailbox the message is in. */
+  mailboxId?: string;
   outcomes: OutcomeLog;
   clock: Clock;
   dryRun: boolean;
@@ -82,6 +84,7 @@ export async function applyDecision(decision: Decision, email: Email, deps: Appl
     ...(decision.areaId ? { areaId: decision.areaId } : {}),
     dryRun: deps.dryRun,
     at: deps.clock.now().toISOString(),
+    ...(deps.mailboxId ? { mailboxId: deps.mailboxId } : {}),
   });
   return decision;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runMailbox } from "../../src/pipeline/runMailbox";
 import { RESYNC_WINDOW } from "../../src/pipeline/startPoint";
-import { fakeCursor, fakeMailbox, fakeOutcomes, fakeSenders, fakeSpam, fixture, runDeps } from "./fakes";
+import { fakeCursor, fakeMailbox, fakeOutcomes, fakeQueue, fakeSenders, fakeSpam, fixture, runDeps } from "./fakes";
 
 const msgs = () => [
   { uid: 301, source: fixture("newsletter-with-list-unsubscribe.eml") },
@@ -56,7 +56,7 @@ describe("runMailbox", () => {
     const result = await runMailbox(deps);
     expect(records.map((r) => r.uid)).toEqual([301, 303]);
     expect(result?.aborted).toBe(false);
-    expect(result?.run.error).toBe("uid 302: spam engine exploded");
+    expect(result?.run.error).toBe("mb-1 uid 302: spam engine exploded");
     expect(cursor.value?.uidNext).toBe(304);
   });
 
@@ -65,7 +65,7 @@ describe("runMailbox", () => {
     box.mailbox.open = async () => { throw new Error("connection refused"); };
     const { deps, runs } = runDeps({ mailbox: box.mailbox });
     const result = await runMailbox(deps);
-    expect(result).toMatchObject({ aborted: true, run: { error: "run: connection refused" } });
+    expect(result).toMatchObject({ aborted: true, run: { error: "mailbox mb-1: connection refused" } });
     expect(runs).toHaveLength(1);
   });
 
@@ -90,5 +90,61 @@ describe("runMailbox", () => {
     await runMailbox(deps);
     expect(box.changes().length > 0).toBe(touches);
     expect(records.every((r) => r.dryRun === !touches)).toBe(true);
+  });
+});
+
+describe("runMailbox over several mailboxes", () => {
+  const second = () => [{ uid: 7, source: fixture("receipt.eml") }];
+
+  it("reads each mailbox under its own cursor and records where each message came from", async () => {
+    const a = fakeMailbox({ uidValidity: 9, uidNext: 302 }, msgs().slice(0, 1));
+    const b = fakeMailbox({ uidValidity: 3, uidNext: 8 }, second());
+    const cursorA = fakeCursor({ uidValidity: 9, uidNext: 301 });
+    const cursorB = fakeCursor();
+    const { deps, records } = runDeps({ mailbox: a.mailbox });
+    deps.mailboxes = async () => [{ id: "a", mailbox: a.mailbox, cursor: cursorA }, { id: "b", mailbox: b.mailbox, cursor: cursorB }];
+    const result = await runMailbox(deps);
+    expect(result).toMatchObject({ mailboxes: 2, aborted: false, run: { fetched: 2 } });
+    expect(records.map((r) => [r.mailboxId, r.uid])).toEqual([["a", 301], ["b", 7]]);
+    expect(cursorA.value).toEqual({ uidValidity: 9, uidNext: 302 });
+    expect(cursorB.value).toEqual({ uidValidity: 3, uidNext: 8 });
+  });
+
+  it("notes a failing mailbox on the run and still reads the others", async () => {
+    const broken = fakeMailbox({ uidValidity: 1, uidNext: 1 }, []);
+    broken.mailbox.open = async () => { throw new Error("login refused"); };
+    const ok = fakeMailbox({ uidValidity: 3, uidNext: 8 }, second());
+    const { deps, records, runs } = runDeps({ mailbox: ok.mailbox });
+    deps.mailboxes = async () => [
+      { id: "broken", mailbox: broken.mailbox, cursor: fakeCursor() },
+      { id: "ok", mailbox: ok.mailbox, cursor: fakeCursor() },
+    ];
+    const result = await runMailbox(deps);
+    expect(records.map((r) => r.mailboxId)).toEqual(["ok"]);
+    expect(result).toMatchObject({ aborted: true, run: { error: "mailbox broken: login refused" } });
+    expect(broken.calls).toContain("close");
+    expect(runs).toHaveLength(1);
+  });
+
+  it("carries out each undo in the mailbox it was queued for", async () => {
+    const a = fakeMailbox({ uidValidity: 1, uidNext: 1 }, []);
+    const b = fakeMailbox({ uidValidity: 1, uidNext: 1 }, []);
+    const { deps } = runDeps({ mailbox: a.mailbox });
+    const qa = fakeQueue([{ id: 1, messageId: "<in-a@x>", action: "move_to_inbox", from: "junk", attempts: 0 }]);
+    const qb = fakeQueue([{ id: 2, messageId: "<in-b@x>", action: "move_to_inbox", from: "archive", attempts: 0 }]);
+    deps.mailboxes = async () => [
+      { id: "a", mailbox: a.mailbox, cursor: fakeCursor(), pendingActions: qa.queue },
+      { id: "b", mailbox: b.mailbox, cursor: fakeCursor(), pendingActions: qb.queue },
+    ];
+    await runMailbox(deps);
+    expect(a.changes()).toEqual(["move <in-a@x> from junk to inbox"]);
+    expect(b.changes()).toEqual(["move <in-b@x> from archive to inbox"]);
+  });
+
+  it("saves no run row when no mailbox is set up", async () => {
+    const { deps, runs } = runDeps({ mailbox: fakeMailbox({ uidValidity: 1, uidNext: 1 }, []).mailbox });
+    deps.mailboxes = async () => [];
+    expect(await runMailbox(deps)).toMatchObject({ mailboxes: 0, aborted: false });
+    expect(runs).toHaveLength(0);
   });
 });

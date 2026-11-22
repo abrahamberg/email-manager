@@ -10,7 +10,7 @@ export async function saveMessage(email: Email, at: { category?: Category; areaI
   await life.store.messages.save({
     messageId: email.messageId, uid: email.uid, threadId: email.threadId, fromAddress: email.from.address,
     fromName: email.from.name, subject: email.subject, receivedAt: email.date, category: at.category,
-    areaId: at.areaId, compactText,
+    areaId: at.areaId, compactText, ...(life.mailboxId ? { mailboxId: life.mailboxId } : {}),
   });
   return compactText;
 }

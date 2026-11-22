@@ -16,6 +16,7 @@ interface Row {
   dry_run: boolean;
   tier: Tier | null;
   at: unknown;
+  mailbox_id: string | null;
 }
 
 export function toRecord(r: Row): TieredOutcome {
@@ -29,6 +30,7 @@ export function toRecord(r: Row): TieredOutcome {
     areaId: orUndef(r.area_id),
     dryRun: r.dry_run,
     ...(r.tier ? { tier: r.tier } : {}),
+    ...(r.mailbox_id ? { mailboxId: r.mailbox_id } : {}),
     at: iso(r.at),
   };
 }
@@ -40,9 +42,10 @@ export function outcomeRepo(db: Db): Omit<OutcomeLog, "record"> & {
   return {
     async record(o: TieredOutcome) {
       await db.query(
-        `INSERT INTO outcomes (message_id, uid, outcome, signal, reason, confidence, area_id, dry_run, tier, at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [o.messageId, o.uid, o.outcome, o.signal, o.reason, o.confidence ?? null, o.areaId ?? null, o.dryRun, o.tier ?? null, o.at],
+        `INSERT INTO outcomes (message_id, uid, outcome, signal, reason, confidence, area_id, dry_run, tier, at, mailbox_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [o.messageId, o.uid, o.outcome, o.signal, o.reason, o.confidence ?? null, o.areaId ?? null, o.dryRun, o.tier ?? null, o.at,
+          o.mailboxId ?? null],
       );
     },
     async seen(messageId) {

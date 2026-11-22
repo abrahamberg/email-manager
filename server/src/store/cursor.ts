@@ -1,7 +1,8 @@
 import type { MailboxCursor } from "../ports";
 import type { Db } from "./db";
 
-export function cursorRepo(db: Db, mailbox = "INBOX"): MailboxCursor {
+/** Keyed by mailbox id. */
+export function cursorRepo(db: Db, mailbox: string): MailboxCursor {
   return {
     async get() {
       const [row] = await db.query<{ uid_validity: string | number; uid_next: string | number }>(

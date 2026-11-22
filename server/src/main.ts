@@ -1,31 +1,17 @@
 // Composition root for the HTTP server: the public API + panel and the internal run trigger.
 import { serve, type ServerType } from "@hono/node-server";
-import { loadConfig, type Config } from "./config";
+import { loadConfig } from "./config";
 import { createApp } from "./http/app";
 import { backgroundRunner, createInternalApp } from "./http/internalApp";
-import type { ConnectDeps } from "./http/routes/connect";
+import { loadInstanceKeys } from "./keys/instanceKeys";
+import { mailboxService } from "./mailboxes/service";
 import { createStore, migrate, postgresDb, type Store } from "./store";
 import { buildRunDeps } from "./wiring/buildRunDeps";
 import { localEmbedder } from "./search/localEmbedder";
 import { vectorSearch } from "./search/vectorSearch";
-import { setupDeps } from "./wiring/setupDeps";
-import { tokenStoreAdapter } from "./wiring/tokenStoreAdapter";
+import { connectDeps, setupDeps, type PanelMailDeps } from "./wiring/setupDeps";
 
 const STATIC_DIR = process.env.STATIC_DIR ?? "/app/public";
-
-function connectDeps(config: Config, store: Store): ConnectDeps | undefined {
-  const { PUBLIC_URL, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY } = config;
-  if (config.MAIL_PROVIDER === "imap" || !PUBLIC_URL || !OAUTH_CLIENT_ID || !OAUTH_CLIENT_SECRET || !TOKEN_ENCRYPTION_KEY) {
-    return undefined;
-  }
-  return {
-    publicUrl: PUBLIC_URL,
-    clientId: OAUTH_CLIENT_ID,
-    clientSecret: OAUTH_CLIENT_SECRET,
-    encryptionKey: Buffer.from(TOKEN_ENCRYPTION_KEY, "base64"),
-    tokenStore: tokenStoreAdapter(store.tokens),
-  };
-}
 
 function askDeps(store: Store) {
   const { facts, messages, decisions, embeddings } = store;
@@ -37,6 +23,7 @@ const closeServer = (server: ServerType) =>
 
 async function main(): Promise<void> {
   const config = loadConfig();
+  const keys = await loadInstanceKeys(config);
   const db = postgresDb(config.DATABASE_URL);
   const store = createStore(db);
   // A worker holding the lock migrates in its own prepare step, so skipping here is safe.
@@ -44,19 +31,24 @@ async function main(): Promise<void> {
   if (!migrated) console.log("server: a run holds the lock; it applies migrations");
 
   const runner = backgroundRunner(
-    () => buildRunDeps(config, db, store),
-    (result) => result && console.log(`server: run fetched=${result.run.fetched} aborted=${result.aborted}`),
+    () => buildRunDeps(config, db, store, keys),
+    (result) => result && console.log(`server: run mailboxes=${result.mailboxes} fetched=${result.run.fetched} aborted=${result.aborted}`),
   );
-  const connect = connectDeps(config, store);
+  const mail: PanelMailDeps = {
+    service: mailboxService(store.mailboxes, store.tokens, keys.encryptionKey),
+    tokens: store.tokens,
+    encryptionKey: keys.encryptionKey,
+    publicUrl: config.PUBLIC_URL,
+  };
   const app = createApp({
     allowedEmails: config.ALLOWED_EMAILS,
     runs: store.runs,
-    connect,
-    setup: setupDeps(connect),
+    connect: connectDeps(mail),
+    setup: setupDeps(mail),
     staticDir: STATIC_DIR,
     api: { db, ask: askDeps(store) },
   });
-  const internal = createInternalApp({ token: config.INTERNAL_TOKEN, trigger: runner.trigger });
+  const internal = createInternalApp({ token: keys.internalToken, trigger: runner.trigger });
   const servers = [
     serve({ fetch: app.fetch, port: config.PORT }),
     serve({ fetch: internal.fetch, port: config.INTERNAL_PORT }),

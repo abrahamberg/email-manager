@@ -3,21 +3,30 @@ import { Hono } from "hono";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 import { accountEmail } from "../../mail/auth/accountEmail.js";
 import { randomToken, s256Challenge } from "../../mail/auth/pkce.js";
-import { isProviderId, providers, type OAuthProvider } from "../../mail/auth/providers.js";
+import { isProviderId, providers, type OAuthProvider, type OAuthProviderId } from "../../mail/auth/providers.js";
 import { requestToken, type FetchLike } from "../../mail/auth/tokenEndpoint.js";
 import { sealGrant, type TokenStore } from "../../mail/auth/tokenStore.js";
 
-export interface ConnectDeps {
-  publicUrl: string;
+/** The saved OAuth app and grant store of one mailbox. */
+export interface MailboxClient {
+  provider: OAuthProviderId;
   clientId: string;
   clientSecret: string;
-  encryptionKey: string | Buffer;
   tokenStore: TokenStore;
+}
+
+export interface ConnectDeps {
+  publicUrl: string;
+  /** Undefined unless the mailbox exists, uses OAuth, and has its client id and secret saved. */
+  client(mailboxId: string): Promise<MailboxClient | undefined>;
+  encryptionKey: string | Buffer;
   fetchImpl?: FetchLike;
 }
 
 const COOKIE = "oauth_flow";
 const FLOW_TTL_SECONDS = 600;
+// "~" is in neither base64url nor a mailbox id, so the state splits back into both.
+const STATE_SEP = "~";
 
 export function connectRoutes(deps: ConnectDeps): Hono {
   const app = new Hono();
@@ -33,14 +42,23 @@ export function connectRoutes(deps: ConnectDeps): Hono {
     maxAge: FLOW_TTL_SECONDS,
   });
 
+  const clientFor = async (mailboxId: string, provider: OAuthProviderId) => {
+    const client = mailboxId ? await deps.client(mailboxId) : undefined;
+    return client?.provider === provider ? client : undefined;
+  };
+
   app.get("/api/connect/:provider/start", async (c) => {
     const id = c.req.param("provider");
     if (!isProviderId(id)) return c.text("Unknown provider", 404);
     const provider = providers[id];
-    const state = randomToken();
+    const mailboxId = c.req.query("mailbox") ?? "";
+    const client = await clientFor(mailboxId, id);
+    if (!client) return c.text("Save this mailbox with its client ID and secret first", 409);
+    // Why: the redirect URI is fixed per provider, so the mailbox rides in the signed state.
+    const state = `${mailboxId}${STATE_SEP}${randomToken()}`;
     const verifier = randomToken(48);
     await setSignedCookie(c, COOKIE, `${state}.${verifier}`, secret, cookieOpts(provider));
-    return c.redirect(authorizeUrl(provider, deps.clientId, redirectUri(provider), state, verifier));
+    return c.redirect(authorizeUrl(provider, client.clientId, redirectUri(provider), state, verifier));
   });
 
   app.get("/api/connect/:provider/callback", async (c) => {
@@ -54,17 +72,19 @@ export function connectRoutes(deps: ConnectDeps): Hono {
     if (!expected || !verifier || !state || state !== expected) return c.text("Sign-in expired or state mismatch", 400);
     const code = c.req.query("code");
     if (!code) return c.text("Sign-in was cancelled", 400);
+    const client = await clientFor(state.split(STATE_SEP)[0] ?? "", id);
+    if (!client) return c.text("This mailbox was removed or changed during sign-in", 409);
 
     const token = await requestToken(
       provider,
-      { clientId: deps.clientId, clientSecret: deps.clientSecret },
+      { clientId: client.clientId, clientSecret: client.clientSecret },
       { grant_type: "authorization_code", code, redirect_uri: redirectUri(provider), code_verifier: verifier },
       fetchImpl,
     );
     if (!token.refresh_token) return c.text("Provider did not grant offline access", 502);
     const user = await accountEmail(provider, token, fetchImpl);
     const expiresAt = new Date(Date.now() + token.expires_in * 1000).toISOString();
-    await deps.tokenStore.save(provider.id, sealGrant({ user, refreshToken: token.refresh_token }, deps.encryptionKey), expiresAt);
+    await client.tokenStore.save(sealGrant({ user, refreshToken: token.refresh_token }, deps.encryptionKey), expiresAt);
     return c.redirect("/#setup");
   });
 

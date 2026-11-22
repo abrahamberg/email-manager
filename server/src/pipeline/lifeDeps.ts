@@ -56,6 +56,8 @@ export interface LifeRun extends Omit<LifeDeps, "embedder"> {
   settings(): Promise<Settings>;
   interests(): Promise<Interest[]>;
   takeWhySlots(wanted: number): number;
+  /** Set per mailbox during a run, so stored messages say where they came from. */
+  mailboxId?: string;
 }
 
 const once = <T>(load: () => Promise<T>) => {

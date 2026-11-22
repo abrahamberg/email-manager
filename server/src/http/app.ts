@@ -15,7 +15,7 @@ import { serveSpa } from "./static";
 export interface AppDeps {
   allowedEmails: readonly string[];
   runs: RunHistory;
-  /** Only for OAuth providers; IMAP needs no connect flow. */
+  /** OAuth sign-in per mailbox; absent without PUBLIC_URL. */
   connect?: ConnectDeps;
   /** Test connection and read-only learning from the Set up page. */
   setup?: SetupDeps;

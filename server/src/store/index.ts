@@ -5,6 +5,7 @@ import { cursorRepo } from "./cursor";
 import { decisionRepo } from "./decisions";
 import { embeddingRepo } from "./embeddings";
 import { factRepo } from "./facts";
+import { mailboxRepo } from "./mailboxes";
 import { matterRepo } from "./matters";
 import { messageRepo } from "./messages";
 import { outcomeRepo } from "./outcomes";
@@ -28,14 +29,15 @@ export function createStore(db: Db) {
   return {
     areas: areaRepo(db),
     briefings: briefingRepo(db),
-    cursor: cursorRepo(db),
+    cursorFor: (mailboxId: string) => cursorRepo(db, mailboxId),
     decisions: decisionRepo(db),
     embeddings: embeddingRepo(db),
     facts: factRepo(db),
+    mailboxes: mailboxRepo(db),
     matters: matterRepo(db),
     messages: messageRepo(db),
     outcomes: outcomeRepo(db),
-    pendingActions: pendingActionRepo(db),
+    pendingActionsFor: (mailboxId: string) => pendingActionRepo(db, mailboxId),
     policies: policyRepo(db),
     quickChecks: quickCheckRepo(db),
     rules: ruleRepo(db),

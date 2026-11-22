@@ -1,21 +1,11 @@
 import { describe, expect, it } from "vitest";
-import {
-  MAX_ATTEMPTS, runPendingActions, settlementFor, type PendingAction, type PendingActionQueue, type Settlement,
-} from "../../src/pipeline/pendingActions";
+import { MAX_ATTEMPTS, runPendingActions, settlementFor, type PendingAction, type PendingActionQueue } from "../../src/pipeline/pendingActions";
 import { runMailbox } from "../../src/pipeline/runMailbox";
-import { fakeMailbox, fixture, runDeps } from "./fakes";
+import { fakeMailbox, fakeQueue, fixture, runDeps } from "./fakes";
 
 const action = (id: number, over: Partial<PendingAction> = {}): PendingAction =>
   ({ id, messageId: `<m${id}@x>`, action: "move_to_inbox", from: "junk", attempts: 0, ...over });
 
-function fakeQueue(actions: PendingAction[]) {
-  const settled: [number, Settlement][] = [];
-  const queue: PendingActionQueue = {
-    due: async () => actions,
-    settle: async (id, s) => void settled.push([id, s]),
-  };
-  return { queue, settled };
-}
 
 describe("settlementFor", () => {
   it.each([
@@ -82,6 +72,6 @@ describe("runMailbox with pending actions", () => {
     const result = await runMailbox(deps);
     expect(records).toHaveLength(1);
     expect(result?.aborted).toBe(false);
-    expect(result?.run.error).toBe("pending actions: db down");
+    expect(result?.run.error).toBe("mb-1: pending actions: db down");
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ImapMailboxOptions } from "../../src/mail/imapMailbox";
 import type { Mailbox } from "../../src/ports";
 import { isPublicIp, resolvePublic } from "../../src/setup/publicAddress";
-import { pinnedImap } from "../../src/wiring/setupDeps";
+import { pinnedImap } from "../../src/mailboxes/connection";
 
 describe("isPublicIp", () => {
   it.each([

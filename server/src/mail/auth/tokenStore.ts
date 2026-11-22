@@ -1,11 +1,10 @@
 import { z } from "zod";
 import { decrypt, encrypt } from "./crypto.js";
-import type { OAuthProviderId } from "./providers.js";
 
-/** Why: the store keeps only ciphertext; it never sees a refresh token. */
+/** Why: the store keeps only ciphertext; it never sees a refresh token. Bound to one mailbox. */
 export interface TokenStore {
-  load(provider: OAuthProviderId): Promise<string | undefined>;
-  save(provider: OAuthProviderId, blob: string, expiresAt: string): Promise<void>;
+  load(): Promise<string | undefined>;
+  save(blob: string, expiresAt: string): Promise<void>;
 }
 
 const grantSchema = z.object({ user: z.string().min(1), refreshToken: z.string().min(1) });

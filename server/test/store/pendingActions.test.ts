@@ -6,23 +6,23 @@ import { useFreshDb } from "./freshDb";
 
 describe("pending mailbox actions", () => {
   const db = useFreshDb();
-  const repo = () => pendingActionRepo(db());
+  const repo = () => pendingActionRepo(db(), "mb-1");
   const reset = () => db().exec("DELETE FROM pending_mailbox_actions");
 
   it("queues a move back only for outcomes that moved the message, with its source folder", async () => {
     await reset();
-    await queueMoveToInbox(db(), { messageId: "<j@x>", uid: 1, outcome: "junk" });
-    await queueMoveToInbox(db(), { messageId: "<d@x>", uid: 2, outcome: "digest" });
-    await queueMoveToInbox(db(), { messageId: "<a@x>", uid: 3, outcome: "archived" });
-    await queueMoveToInbox(db(), { messageId: "<k@x>", uid: 4, outcome: "labeled" });
+    await queueMoveToInbox(db(), { messageId: "<j@x>", uid: 1, outcome: "junk", mailboxId: "mb-1" });
+    await queueMoveToInbox(db(), { messageId: "<d@x>", uid: 2, outcome: "digest", mailboxId: "mb-1" });
+    await queueMoveToInbox(db(), { messageId: "<a@x>", uid: 3, outcome: "archived", mailboxId: "mb-1" });
+    await queueMoveToInbox(db(), { messageId: "<k@x>", uid: 4, outcome: "labeled", mailboxId: "mb-1" });
     const due = await repo().due();
     expect(due.map((a) => [a.messageId, a.from, a.attempts])).toEqual([["<j@x>", "junk", 0], ["<d@x>", "archive", 0], ["<a@x>", "archive", 0]]);
   });
 
   it("drops done rows and rows out of attempts, and keeps failures retryable until then", async () => {
     await reset();
-    await queueMoveToInbox(db(), { messageId: "<1@x>", uid: 1, outcome: "junk" });
-    await queueMoveToInbox(db(), { messageId: "<2@x>", uid: 2, outcome: "junk" });
+    await queueMoveToInbox(db(), { messageId: "<1@x>", uid: 1, outcome: "junk", mailboxId: "mb-1" });
+    await queueMoveToInbox(db(), { messageId: "<2@x>", uid: 2, outcome: "junk", mailboxId: "mb-1" });
     const [first, second] = await repo().due();
     await repo().settle(first!.id, { done: true, attempts: 1 });
     await repo().settle(second!.id, { done: false, attempts: MAX_ATTEMPTS - 1, lastError: "timeout" });
@@ -37,11 +37,21 @@ describe("pending mailbox actions", () => {
   it("skips rows with an action it does not know", async () => {
     await reset();
     await db().query("INSERT INTO pending_mailbox_actions (message_id, uid, action, from_folder) VALUES ('<z@x>', 1, 'delete', 'junk')");
+    await db().query("UPDATE pending_mailbox_actions SET mailbox_id = 'mb-1'");
     expect(await repo().due()).toEqual([]);
   });
 
   it("rejects an unknown source folder", async () => {
     await expect(db().query(
       "INSERT INTO pending_mailbox_actions (message_id, uid, action, from_folder) VALUES ('<z@x>', 1, 'move_to_inbox', 'sent')")).rejects.toThrow();
+  });
+
+  it("hands each mailbox only its own rows, and never rows queued before mailboxes existed", async () => {
+    await reset();
+    await queueMoveToInbox(db(), { messageId: "<mine@x>", uid: 1, outcome: "junk", mailboxId: "mb-1" });
+    await queueMoveToInbox(db(), { messageId: "<other@x>", uid: 2, outcome: "junk", mailboxId: "mb-2" });
+    await queueMoveToInbox(db(), { messageId: "<old@x>", uid: 3, outcome: "junk" });
+    expect((await repo().due()).map((a) => a.messageId)).toEqual(["<mine@x>"]);
+    expect((await pendingActionRepo(db(), "mb-2").due()).map((a) => a.messageId)).toEqual(["<other@x>"]);
   });
 });

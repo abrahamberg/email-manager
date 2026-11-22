@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/http/app";
 import type { SetupDeps } from "../../src/http/routes/setup";
+import type { MailboxAdmin } from "../../src/mailboxes/service";
 import type { Mailbox, RawMessage } from "../../src/ports";
 import { checkConnection } from "../../src/setup/checkConnection";
 import { learnFromMail } from "../../src/setup/learnFromMail";
@@ -73,18 +74,18 @@ describe("readOnly", () => {
 
 describe("SetupTarget", () => {
   const imap = { provider: "imap", host: "imap.example.com", port: 993, user: "me@example.com", password: "pw" };
-  it("accepts the three choices", () => {
+  it("accepts an unsaved IMAP login or a saved mailbox", () => {
     expect(SetupTarget.safeParse(imap).success).toBe(true);
-    expect(SetupTarget.safeParse({ provider: "gmail" }).success).toBe(true);
-    expect(SetupTarget.safeParse({ provider: "office365" }).success).toBe(true);
+    expect(SetupTarget.safeParse({ mailboxId: "mb-1" }).success).toBe(true);
   });
   it.each([
     [{ ...imap, port: 143 }],
     [{ ...imap, host: "localhost" }],
     [{ ...imap, password: "" }],
     [{ ...imap, extra: 1 }],
-    [{ provider: "gmail", host: "evil.example.com" }],
-    [{ provider: "yahoo" }],
+    [{ provider: "gmail" }],
+    [{ mailboxId: "mb-1", host: "evil.example.com" }],
+    [{ mailboxId: "" }],
   ])("rejects %j", (body) => {
     expect(SetupTarget.safeParse(body).success).toBe(false);
   });
@@ -99,12 +100,15 @@ describe("SetupTarget", () => {
 
 describe("setup routes", () => {
   const PASSWORD = "hunter2-very-secret";
+  const noAdmin: MailboxAdmin = {
+    list: async () => [], create: async () => ({ ok: false, error: "secret_required" }),
+    update: async () => ({ ok: false, error: "not_found" }), remove: async () => false,
+  };
   function app(overrides: Partial<SetupDeps> = {}) {
     const seen: SetupTarget[] = [];
     const deps: SetupDeps = {
-      oauthEnabled: true, now: () => NOW,
-      connected: async () => ({ office365: true, gmail: false }),
-      reader: (t) => (seen.push(t), fakeReader().box),
+      oauthEnabled: true, now: () => NOW, mailboxes: noAdmin,
+      reader: async (t) => (seen.push(t), "mailboxId" in t && t.mailboxId !== "mb-1" ? undefined : fakeReader().box),
       ...overrides,
     };
     const a = createApp({ allowedEmails: ["owner@example.com"], runs: { recent: async () => [] }, staticDir: staticFixture(), setup: deps });
@@ -118,36 +122,35 @@ describe("setup routes", () => {
     expect((await app().a.request("/api/setup/status")).status).toBe(401);
   });
 
-  it("reports which OAuth accounts are connected", async () => {
-    const res = await app().a.request("/api/setup/status", { headers: { "X-Auth-Request-Email": "owner@example.com" } });
-    expect(await res.json()).toEqual({ oauthEnabled: true, connected: { office365: true, gmail: false } });
+  it("reports whether OAuth sign-in is possible", async () => {
+    const res = await app({ oauthEnabled: false }).a.request("/api/setup/status", { headers: { "X-Auth-Request-Email": "owner@example.com" } });
+    expect(await res.json()).toEqual({ oauthEnabled: false });
   });
 
-  it("tests an IMAP connection and never echoes the password", async () => {
+  it("tests an unsaved IMAP login, says nothing was saved, and never echoes the password", async () => {
     const res = await app().post("/api/setup/test", imap);
     const text = await res.text();
     expect(res.status).toBe(200);
-    expect(JSON.parse(text)).toMatchObject({ ok: true, note: expect.stringContaining("not saved") });
+    expect(JSON.parse(text)).toMatchObject({ ok: true, note: expect.stringContaining("did not save") });
     expect(text).not.toContain(PASSWORD);
   });
 
-  it("learns from 30 days for an OAuth provider, with no note", async () => {
+  it("learns from 30 days of a saved mailbox, with no note", async () => {
     const { post, seen } = app();
-    const body = await (await post("/api/setup/learn", { provider: "gmail" })).json();
-    expect(seen).toEqual([{ provider: "gmail" }]);
+    const body = await (await post("/api/setup/learn", { mailboxId: "mb-1" })).json();
+    expect(seen).toEqual([{ mailboxId: "mb-1" }]);
     expect(body).toEqual({ ok: true, summary: { daysRead: 30, emailsRead: 3, distinctSenders: 2, newsletters: 1 } });
   });
 
   it.each([
-    ["not an object", "x"], ["unknown provider", { provider: "aol" }], ["private host", { ...imap, host: "10.0.0.1" }],
+    ["not an object", "x"], ["provider without a mailbox", { provider: "gmail" }], ["private host", { ...imap, host: "10.0.0.1" }],
     ["wrong port", { ...imap, port: 25 }],
   ])("rejects a bad body: %s", async (_n, body) => {
     expect((await app().post("/api/setup/test", body)).status).toBe(400);
     expect((await app().post("/api/setup/learn", body)).status).toBe(400);
   });
 
-  it("answers 409 when OAuth is not configured", async () => {
-    const res = await app({ reader: () => undefined }).post("/api/setup/test", { provider: "office365" });
-    expect(res.status).toBe(409);
+  it("answers 404 for a mailbox that is not saved", async () => {
+    expect((await app().post("/api/setup/test", { mailboxId: "gone" })).status).toBe(404);
   });
 });
