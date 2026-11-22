@@ -1,6 +1,9 @@
-import type { MailAuth, MailCredentials, Mailbox, MailboxState, RawMessage } from "../ports.js";
+import type { HeaderScan, MailAuth, MailCredentials, Mailbox, MailboxState, RawMessage } from "../ports.js";
 import { imapflowClient, type ImapClient, type ImapClientFactory } from "./imap/client.js";
 import { resolveFolders, type Folders } from "./imap/folders.js";
+
+/** The headers bulk detection and sender grouping read; nothing else leaves the server. */
+const SCAN_HEADERS = ["from", "list-id", "list-unsubscribe", "precedence", "auto-submitted", "x-auto-response-suppress"];
 
 export interface ImapMailboxOptions {
   host: string;
@@ -62,6 +65,15 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
       for (const next of uids) {
         const msg = await (await inbox()).client.fetchOne(String(next), { uid: true, source: true }, { uid: true });
         if (msg && msg.source) yield { uid: msg.uid, source: new Uint8Array(msg.source) };
+      }
+    },
+
+    async *scanHeaders(uid: number): AsyncIterable<HeaderScan> {
+      const c = (await inbox()).client;
+      for await (const msg of c.fetch(`${uid + 1}:*`, { uid: true, internalDate: true, headers: SCAN_HEADERS }, { uid: true })) {
+        if (msg.uid <= uid || !msg.headers) continue;
+        const received = msg.internalDate instanceof Date ? msg.internalDate : new Date(msg.internalDate ?? 0);
+        yield { uid: msg.uid, receivedAt: received.toISOString(), headers: new Uint8Array(msg.headers) };
       }
     },
 

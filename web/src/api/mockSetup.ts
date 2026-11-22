@@ -44,6 +44,12 @@ export const mockSetupApi: SetupApi = {
     return "provider" in target ? { ok: true, note: UNSAVED_NOTE } : { ok: true };
   },
   async learn() {
-    return { ok: true, summary: { daysRead: 30, emailsRead: 1284, distinctSenders: 212, newsletters: 96 } };
+    return { ok: true, summary: {
+      daysRead: 30, emailsRead: 1284, distinctSenders: 212, newsletters: 1102, needsYou: 182,
+      groups: [
+        { kind: "newsletters", emails: 861, senders: 74, top: [{ sender: "news@example.com", emails: 58 }, { sender: "deals@shop.example", emails: 41 }] },
+        { kind: "notifications", emails: 241, senders: 38, top: [{ sender: "no-reply@bank.example", emails: 33 }] },
+      ],
+    } };
   },
 };

@@ -11,6 +11,7 @@ export type ImapClient = Pick<
   | "mailboxOpen"
   | "search"
   | "fetchOne"
+  | "fetch"
   | "messageMove"
   | "messageFlagsAdd"
   | "append"

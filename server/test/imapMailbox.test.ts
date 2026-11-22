@@ -47,6 +47,12 @@ function fakeServer(boxes: Record<string, Box>) {
         const m = cur().messages.get(Number(uid));
         return m ? { uid: Number(uid), seq: 1, source: m.source } : false;
       },
+      async *fetch(range: string) {
+        const lo = Number(range.split(":")[0]);
+        for (const [uid, m] of cur().messages) {
+          if (uid >= lo) yield { uid, seq: uid, internalDate: new Date("2026-11-20T10:00:00Z"), headers: Buffer.from(m.source.toString().split("\r\n\r\n")[0]!) };
+        }
+      },
       async messageMove(uid: string, dest: string) {
         const m = cur().messages.get(Number(uid))!;
         cur().messages.delete(Number(uid));
@@ -89,6 +95,16 @@ async function collect(it: AsyncIterable<{ uid: number }>) {
 }
 
 describe("imapMailbox", () => {
+  it("scans only headers after a UID, in one pass", async () => {
+    const { mailbox } = setup({ INBOX: inboxWith(3) });
+    const scanned: { uid: number; receivedAt: string; headers: string }[] = [];
+    for await (const m of mailbox.scanHeaders(1)) scanned.push({ ...m, headers: new TextDecoder().decode(m.headers) });
+    expect(scanned).toEqual([
+      { uid: 2, receivedAt: "2026-11-20T10:00:00.000Z", headers: "Subject: 2" },
+      { uid: 3, receivedAt: "2026-11-20T10:00:00.000Z", headers: "Subject: 3" },
+    ]);
+  });
+
   it("opens INBOX and reports its state", async () => {
     const { mailbox } = setup({ INBOX: inboxWith(3) });
     expect(await mailbox.open()).toEqual({ uidValidity: 7, uidNext: 4 });

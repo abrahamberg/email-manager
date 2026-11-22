@@ -17,10 +17,20 @@ export interface RawMessage {
   source: Uint8Array;
 }
 
+/** Only what looking at the mail needs: the header block and when it arrived. */
+export interface HeaderScan {
+  uid: number;
+  /** ISO time the server received it. */
+  receivedAt: string;
+  headers: Uint8Array;
+}
+
 /** Why: IMAP details (UIDs, folders, flags) stay in one adapter. */
 export interface Mailbox {
   open(): Promise<MailboxState>;
   fetchSince(uid: number): AsyncIterable<RawMessage>;
+  /** Headers only, for every message after `uid`, in one request. For read-only previews. */
+  scanHeaders(uid: number): AsyncIterable<HeaderScan>;
   moveTo(uid: number, folder: "junk" | "archive"): Promise<void>;
   /** Moves a message back by its Message-ID header; false when no such message is in that folder. */
   moveToInbox(messageId: string, from: "junk" | "archive"): Promise<boolean>;

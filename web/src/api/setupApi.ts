@@ -42,11 +42,27 @@ export interface SetupStatus {
 export type FailureCode = "login_failed" | "reconnect_needed" | "unreachable" | "not_found";
 export type SaveError = "secret_required" | "provider_fixed" | "invalid" | "not_found";
 
+export interface SenderCount {
+  sender: string;
+  emails: number;
+}
+
+export interface KindGroup {
+  kind: "newsletters" | "notifications";
+  emails: number;
+  senders: number;
+  top: SenderCount[];
+}
+
 export interface LearnSummary {
   daysRead: number;
   emailsRead: number;
   distinctSenders: number;
+  /** Bulk mail of any kind: newsletters, lists and automatic notifications. */
   newsletters: number;
+  /** Mail from people: what would still reach the user. */
+  needsYou: number;
+  groups: KindGroup[];
 }
 
 export type TestResult = { ok: true; note?: string } | { ok: false; error: FailureCode };

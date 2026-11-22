@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createApp } from "../../src/http/app";
 import type { SetupDeps } from "../../src/http/routes/setup";
 import type { MailboxAdmin } from "../../src/mailboxes/service";
-import type { Mailbox, RawMessage } from "../../src/ports";
+import type { HeaderScan, Mailbox } from "../../src/ports";
 import { checkConnection } from "../../src/setup/checkConnection";
 import { learnFromMail } from "../../src/setup/learnFromMail";
 import { readOnly, type ReadOnlyMailbox } from "../../src/setup/readOnly";
@@ -12,16 +12,17 @@ import { staticFixture } from "../http/helpers";
 const NOW = new Date("2026-11-21T12:00:00Z");
 const enc = (s: string) => new TextEncoder().encode(s);
 
-function message(uid: number, from: string, date: string, extra = ""): RawMessage {
-  const head = `From: ${from}\r\nTo: me@example.com\r\nSubject: s${uid}\r\nMessage-ID: <m${uid}@x>\r\nDate: ${date}\r\n${extra}`;
-  return { uid, source: enc(`${head}\r\nbody\r\n`) };
+function message(uid: number, from: string, receivedAt: string, extra = ""): HeaderScan {
+  return { uid, receivedAt: new Date(receivedAt).toISOString(), headers: enc(`From: ${from}\r\nSubject: s${uid}\r\n${extra}`) };
 }
 
 const MESSAGES = [
   message(1, "old@a.com", "Mon, 05 Oct 2026 10:00:00 +0000"),
-  message(2, "a@a.com", "Mon, 16 Nov 2026 10:00:00 +0000"),
+  message(2, "A Person <a@a.com>", "Mon, 16 Nov 2026 10:00:00 +0000"),
   message(3, "A@a.com", "Tue, 17 Nov 2026 10:00:00 +0000"),
   message(4, "news@b.com", "Wed, 18 Nov 2026 10:00:00 +0000", "List-Unsubscribe: <mailto:u@b.com>\r\nList-Id: <n.b.com>\r\n"),
+  message(5, "no-reply@c.com", "Wed, 18 Nov 2026 11:00:00 +0000"),
+  message(6, "news@b.com", "Thu, 19 Nov 2026 11:00:00 +0000", "List-Id: <n.b.com>\r\n"),
 ];
 
 function fakeReader(opts: { fail?: unknown } = {}) {
@@ -30,10 +31,10 @@ function fakeReader(opts: { fail?: unknown } = {}) {
     async open() {
       log.push("open");
       if (opts.fail) throw opts.fail;
-      return { uidValidity: 1, uidNext: 5 };
+      return { uidValidity: 1, uidNext: 7 };
     },
-    async *fetchSince(uid) {
-      log.push(`fetchSince:${uid}`);
+    async *scanHeaders(uid) {
+      log.push(`scanHeaders:${uid}`);
       for (const m of MESSAGES) if (m.uid > uid) yield m;
     },
     async close() { log.push("close"); },
@@ -45,7 +46,16 @@ describe("learnFromMail", () => {
   it("counts only the last 30 days, senders without case, and newsletters", async () => {
     const { box, log } = fakeReader();
     const result = await learnFromMail(box, NOW);
-    expect(result).toEqual({ ok: true, summary: { daysRead: 30, emailsRead: 3, distinctSenders: 2, newsletters: 1 } });
+    expect(result).toEqual({
+      ok: true,
+      summary: {
+        daysRead: 30, emailsRead: 5, distinctSenders: 3, newsletters: 3, needsYou: 2,
+        groups: [
+          { kind: "newsletters", emails: 2, senders: 1, top: [{ sender: "news@b.com", emails: 2 }] },
+          { kind: "notifications", emails: 1, senders: 1, top: [{ sender: "no-reply@c.com", emails: 1 }] },
+        ],
+      },
+    });
     expect(log.at(-1)).toBe("close");
   });
 
@@ -67,8 +77,8 @@ describe("checkConnection", () => {
 
 describe("readOnly", () => {
   it("exposes no way to change the mailbox", () => {
-    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, moveToInbox: async () => false, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
-    expect(Object.keys(readOnly(full)).sort()).toEqual(["close", "fetchSince", "open"]);
+    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), scanHeaders: async function* () {}, fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, moveToInbox: async () => false, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
+    expect(Object.keys(readOnly(full)).sort()).toEqual(["close", "open", "scanHeaders"]);
   });
 });
 
@@ -139,7 +149,7 @@ describe("setup routes", () => {
     const { post, seen } = app();
     const body = await (await post("/api/setup/learn", { mailboxId: "mb-1" })).json();
     expect(seen).toEqual([{ mailboxId: "mb-1" }]);
-    expect(body).toEqual({ ok: true, summary: { daysRead: 30, emailsRead: 3, distinctSenders: 2, newsletters: 1 } });
+    expect(body).toMatchObject({ ok: true, summary: { daysRead: 30, emailsRead: 5, needsYou: 2, newsletters: 3 } });
   });
 
   it.each([
@@ -152,5 +162,16 @@ describe("setup routes", () => {
 
   it("answers 404 for a mailbox that is not saved", async () => {
     expect((await app().post("/api/setup/test", { mailboxId: "gone" })).status).toBe(404);
+  });
+});
+
+describe("headers", () => {
+  it("parses folded and repeated headers and a display-named From", async () => {
+    const { parseHeaderBlock, parseFrom } = await import("../../src/mail/headerBlock");
+    const h = parseHeaderBlock(enc('From: "Ann, B" <Ann@X.com>\r\nList-Id: <a>\r\n b\r\nX: 1\r\nX: 2\r\n'));
+    expect(h).toEqual({ from: '"Ann, B" <Ann@X.com>', "list-id": "<a> b", x: "1\n2" });
+    expect(parseFrom(h["from"])).toEqual({ name: "Ann, B", address: "ann@x.com" });
+    expect(parseFrom("plain@y.org")).toEqual({ address: "plain@y.org" });
+    expect(parseFrom(undefined)).toEqual({ address: "" });
   });
 });
