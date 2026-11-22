@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../../api";
 import type { MailboxView, SetupStatus, SetupTarget } from "../../api/setupApi";
 import { Button } from "../../components/ui";
@@ -27,6 +27,14 @@ export function ConnectStep({ onNext, onTarget }: Props) {
     if (mailboxes?.length === 0 && !editing) setEditing({ form: emptyForm() });
   }, [mailboxes, editing]);
 
+  const tried = useRef(new Set<string>());
+  useEffect(() => {
+    const next = mailboxes?.find((m) => m.enabled && !tried.current.has(m.id));
+    if (!next || busy) return;
+    tried.current.add(next.id);
+    void test(next);
+  }, [mailboxes, busy]);
+
   async function test(m: MailboxView) {
     setBusy(true);
     try {
@@ -43,11 +51,17 @@ export function ConnectStep({ onNext, onTarget }: Props) {
   async function remove(m: MailboxView) {
     if (!window.confirm(`Remove ${m.label}? Its saved password or sign-in is deleted.`)) return;
     await api.setup.removeMailbox(m.id);
+    tried.current.delete(m.id);
     onTarget(undefined);
     await reload();
   }
 
-  const saved = async () => { setEditing(undefined); await reload(); };
+  const saved = async () => {
+    tried.current.clear();
+    setOutcomes({});
+    setEditing(undefined);
+    await reload();
+  };
   const tested = Object.values(outcomes).some((o) => o?.tone === "ok");
 
   return (
