@@ -8,6 +8,16 @@ jobs:
   test:
     runs-on: ubuntu-latest
     services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: smoke
+          POSTGRES_PASSWORD: smoke
+          POSTGRES_DB: smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U smoke" --health-interval 2s --health-timeout 5s --health-retries 15
       greenmail:
         image: greenmail/standalone:2.1.3
         env:
@@ -30,3 +40,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run build
+      - name: Smoke test the bundle
+        run: scripts/smoke.sh bundle
+        env:
+          DATABASE_URL: postgres://smoke:smoke@localhost:5432/smoke

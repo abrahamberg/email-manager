@@ -9,6 +9,17 @@ permissions:
 jobs:
   image:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: smoke
+          POSTGRES_PASSWORD: smoke
+          POSTGRES_DB: smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U smoke" --health-interval 2s --health-timeout 5s --health-retries 15
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
@@ -20,6 +31,18 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: meta
         run: echo "sha=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      # Boot the real image before pushing, so one that dies at startup never reaches the cluster.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: email-manager:smoke
+          cache-from: type=gha
+      - name: Smoke test the image
+        run: scripts/smoke.sh image email-manager:smoke
+        env:
+          DATABASE_URL: postgres://smoke:smoke@localhost:5432/smoke
       - uses: docker/build-push-action@v6
         with:
           context: .
