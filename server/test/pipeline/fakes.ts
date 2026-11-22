@@ -23,6 +23,7 @@ export function fakeMailbox(state: MailboxState, messages: RawMessage[]) {
       for (const m of messages) if (m.uid > uid) yield m;
     },
     async *scanHeaders() {},
+    readMessage: async () => undefined,
     moveTo: async (uid, folder) => void calls.push(`move ${uid} ${folder}`),
     moveToInbox: async (id, from) => (calls.push(`move ${id} from ${from} to inbox`), true),
     addLabel: async (uid, label) => void calls.push(`label ${uid} ${label}`),

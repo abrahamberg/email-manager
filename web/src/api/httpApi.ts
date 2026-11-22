@@ -27,6 +27,15 @@ export function createHttpApi(fetchFn: Fetch = (...args) => fetch(...args)): Ema
       const { method, path, body } = routeFor(action);
       await call(method, path, body);
     },
+    async emailText(id) {
+      const res = await fetchFn("/api/emails/body", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      return res.ok ? ((await res.json()) as { text: string }).text : undefined;
+    },
     async ask(query) {
       return (await (await call("POST", "/api/ask", { query })).json()) as Answer;
     },

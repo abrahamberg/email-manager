@@ -77,6 +77,18 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
       }
     },
 
+    async readMessage(messageId) {
+      if (!messageId.trim()) return undefined;
+      const { client: c, folders: f } = await connection();
+      for (const folder of [f.inbox, f.archive, f.junk]) {
+        const [uid] = await findByMessageId(c, folder, messageId);
+        if (uid === undefined) continue;
+        const msg = await c.fetchOne(String(uid), { uid: true, source: true }, { uid: true });
+        if (msg && msg.source) return new Uint8Array(msg.source);
+      }
+      return undefined;
+    },
+
     async moveTo(uid, folder) {
       const { client: c, folders: f } = await inbox();
       if (!(await existing(c, uid))) return;

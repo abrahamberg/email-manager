@@ -21,6 +21,8 @@ export interface EmailManagerApi {
   send(action: Action): Promise<void>;
   // `current` lets the mock answer from the live store; the server ignores it.
   ask(query: string, current?: AppData): Promise<Answer>;
+  /** The original text of an email, read from the mailbox when asked. Undefined when it cannot be read. */
+  emailText(id: string): Promise<string | undefined>;
   setup: SetupApi;
 }
 
@@ -29,6 +31,9 @@ export const mockApi: EmailManagerApi = {
     return structuredClone({ briefing, profile, areas, facts, details: { ...details, ...lifeDetails }, decisions, report, streams, snoozed: [], quickChecks, receipts, digest, tasks, policies, rules, feeds, runs, settings });
   },
   setup: mockSetupApi,
+  async emailText() {
+    return undefined;
+  },
   async send() {},
   async ask(query, current) {
     return answerQuestion(current ?? (await mockApi.loadAppData()), query);

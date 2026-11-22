@@ -37,6 +37,7 @@ function fakeReader(opts: { fail?: unknown } = {}) {
       log.push(`scanHeaders:${uid}`);
       for (const m of MESSAGES) if (m.uid > uid) yield m;
     },
+    readMessage: async () => undefined,
     async close() { log.push("close"); },
   };
   return { box, log };
@@ -77,8 +78,8 @@ describe("checkConnection", () => {
 
 describe("readOnly", () => {
   it("exposes no way to change the mailbox", () => {
-    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), scanHeaders: async function* () {}, fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, moveToInbox: async () => false, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
-    expect(Object.keys(readOnly(full)).sort()).toEqual(["close", "open", "scanHeaders"]);
+    const full = { open: async () => ({ uidValidity: 1, uidNext: 1 }), readMessage: async () => undefined, scanHeaders: async function* () {}, fetchSince: async function* () {}, close: async () => {}, moveTo: async () => {}, moveToInbox: async () => false, addLabel: async () => {}, appendDraft: async () => {} } as Mailbox;
+    expect(Object.keys(readOnly(full)).sort()).toEqual(["close", "open", "readMessage", "scanHeaders"]);
   });
 });
 

@@ -29,6 +29,8 @@ export interface HeaderScan {
 export interface Mailbox {
   open(): Promise<MailboxState>;
   fetchSince(uid: number): AsyncIterable<RawMessage>;
+  /** The raw message with this Message-ID from INBOX, archive or junk; undefined when it is gone. Nothing is stored. */
+  readMessage(messageId: string): Promise<Uint8Array | undefined>;
   /** Headers only, for every message after `uid`, in one request. For read-only previews. */
   scanHeaders(uid: number): AsyncIterable<HeaderScan>;
   moveTo(uid: number, folder: "junk" | "archive"): Promise<void>;

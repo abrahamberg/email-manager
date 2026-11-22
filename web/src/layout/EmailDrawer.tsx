@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import { splitLinks } from "../domain/links";
 import type { AuthVerdict, EmailDetail, PipelineStage, TraceStep } from "../domain/types";
 import { formatDay, formatTime } from "../domain/format";
 import { Button, Chip, type ChipTone } from "../components/ui";
@@ -53,10 +56,33 @@ function Checks({ detail }: { detail: EmailDetail }) {
   );
 }
 
+function MailText({ text }: { text: string }) {
+  return (
+    <pre className="email-body">
+      {splitLinks(text).map((part, i) => part.href
+        ? <a key={i} href={part.href} target="_blank" rel="noopener noreferrer nofollow">{part.text}</a>
+        : part.text)}
+    </pre>
+  );
+}
+
+/** The stored text has no links, so the original is read from the mailbox while the drawer is open. */
+function useOriginalText(emailId: string): string | undefined {
+  const [text, setText] = useState<string>();
+  useEffect(() => {
+    let current = true;
+    setText(undefined);
+    api.emailText(emailId).then((t) => current && setText(t), () => undefined);
+    return () => { current = false; };
+  }, [emailId]);
+  return text;
+}
+
 export function EmailDrawer({ emailId, onClose }: { emailId: string; onClose: () => void }) {
   const data = useAppData();
   const email = findEmail(data, emailId);
   const detail = data.details[emailId];
+  const original = useOriginalText(emailId);
   useShortcuts({ Escape: onClose });
   if (!email) return null;
 
@@ -74,7 +100,7 @@ export function EmailDrawer({ emailId, onClose }: { emailId: string; onClose: ()
             {detail && ` · to ${detail.to}`}
           </p>
         </div>
-        <pre className="email-body">{detail?.body ?? email.snippet}</pre>
+        <MailText text={original ?? detail?.body ?? email.snippet} />
         {detail && <Trace steps={detail.trace} />}
         {detail && <Checks detail={detail} />}
       </aside>

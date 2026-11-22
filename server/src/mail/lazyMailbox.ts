@@ -12,6 +12,7 @@ export function lazyMailbox(build: () => Promise<Mailbox>): Mailbox {
     async *scanHeaders(uid) {
       yield* (await get()).scanHeaders(uid);
     },
+    readMessage: async (id) => (await get()).readMessage(id),
     moveTo: async (uid, folder) => (await get()).moveTo(uid, folder),
     moveToInbox: async (id, from) => (await get()).moveToInbox(id, from),
     addLabel: async (uid, label) => (await get()).addLabel(uid, label),

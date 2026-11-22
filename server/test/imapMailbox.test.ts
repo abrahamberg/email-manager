@@ -105,6 +105,19 @@ describe("imapMailbox", () => {
     ]);
   });
 
+  it("reads a message by Message-ID from INBOX, then archive, and nothing when it is gone", async () => {
+    const msg = (id: string) => ({ source: Buffer.from(`Message-ID: ${id}\r\n\r\nx`), flags: new Set<string>() });
+    const { mailbox } = setup({
+      INBOX: { uidValidity: 1n, uidNext: 2, messages: new Map([[1, msg("<in@x>")]]) },
+      Archive: { uidValidity: 1n, uidNext: 2, messages: new Map([[1, msg("<old@x>")]]), specialUse: "\\Archive" },
+    });
+    const text = async (id: string) => { const raw = await mailbox.readMessage(id); return raw && new TextDecoder().decode(raw); };
+    expect(await text("<in@x>")).toContain("<in@x>");
+    expect(await text("<old@x>")).toContain("<old@x>");
+    expect(await text("<none@x>")).toBeUndefined();
+    expect(await text(" ")).toBeUndefined();
+  });
+
   it("opens INBOX and reports its state", async () => {
     const { mailbox } = setup({ INBOX: inboxWith(3) });
     expect(await mailbox.open()).toEqual({ uidValidity: 7, uidNext: 4 });
