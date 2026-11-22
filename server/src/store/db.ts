@@ -13,6 +13,17 @@ export interface Db {
 
 type Sql = postgres.Sql | postgres.TransactionSql;
 
+/**
+ * Why: repos pass already-stringified JSON for `$n::jsonb`. The driver would stringify the
+ * string again and store a JSON scalar, which later fails in jsonb_array_elements and friends.
+ * PGlite does not do this, so tests alone would not catch it.
+ */
+export function jsonParam(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+const JSON_TYPES = { json: { to: 114, from: [114, 3802], serialize: jsonParam, parse: (text: string): unknown => JSON.parse(text) } };
+
 function wrapPostgres(sql: Sql): Omit<Db, "transaction" | "withLock" | "close"> {
   return {
     query: async <T>(text: string, params: unknown[] = []) =>
@@ -28,7 +39,7 @@ function noNested(): never {
 }
 
 export function postgresDb(url: string): Db {
-  const sql = postgres(url, { max: 5, onnotice: () => {} });
+  const sql = postgres(url, { max: 5, onnotice: () => {}, types: JSON_TYPES });
   return {
     ...wrapPostgres(sql),
     transaction: (work) =>
