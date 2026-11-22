@@ -4,8 +4,11 @@ import type { ReadOnlyMailbox } from "./readOnly.js";
 import { failureCode, type FailureCode } from "./checkConnection.js";
 
 export const LEARN_DAYS = 30;
-/** Bounds the work on a large mailbox: only the newest UIDs are looked at. */
-export const LEARN_MAX_MESSAGES = 2000;
+/**
+ * Bounds the work on a large mailbox: only the newest UIDs are looked at. Each message is one
+ * IMAP round trip (about 0.3 s), and the request must finish within the proxy's 100 s limit.
+ */
+export const LEARN_MAX_MESSAGES = 200;
 const DAY_MS = 86_400_000;
 
 export interface LearnSummary {
