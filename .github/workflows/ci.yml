@@ -45,3 +45,19 @@ jobs:
         run: scripts/smoke.sh bundle
         env:
           DATABASE_URL: postgres://smoke:smoke@localhost:5432/smoke
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint and render the Helm chart
+        run: |
+          helm lint deploy/helm/email-manager --set allowedEmails=@example.com --set secrets.databaseUrl=postgres://u:p@db/x
+          helm template t deploy/helm/email-manager --set allowedEmails=@example.com --set secrets.existingSecret=s \
+            --set schedule.mode=inProcess --set ingress.enabled=true --set networkPolicy.enabled=true \
+            --set 'networkPolicy.allowFrom[0].namespaceSelector.matchLabels.team=ingress' > /dev/null
+      - name: Render the Kustomize overlay
+        run: kubectl kustomize deploy/kustomize/overlays/example > /dev/null
+      - name: Validate the Compose file
+        working-directory: deploy/compose
+        run: cp .env.example .env && docker compose config -q

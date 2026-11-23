@@ -30,7 +30,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: meta
-        run: echo "sha=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "sha=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
       # Boot the real image before pushing, so one that dies at startup never reaches the cluster.
       - uses: docker/build-push-action@v6
         with:
@@ -49,7 +51,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/abrahamberg/email-manager:${{ steps.meta.outputs.sha }}
-            ghcr.io/abrahamberg/email-manager:latest
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha }}
+            ${{ steps.meta.outputs.image }}:latest
+            ${{ github.ref_type == 'tag' && format('{0}:{1}', steps.meta.outputs.image, github.ref_name) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

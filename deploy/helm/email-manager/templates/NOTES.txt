@@ -1,0 +1,16 @@
+email-manager is installed{{ if .Values.dryRun }} in dry-run mode: it reports what it would do and changes nothing{{ end }}.
+{{- if .Values.ingress.enabled }}
+
+Open https://{{ .Values.ingress.host }} and add a mailbox under Set up.
+{{- else }}
+
+No ingress is enabled. Route your auth proxy to the service
+{{ include "email-manager.fullname" . }}:{{ .Values.service.port }}, then add a mailbox under Set up.
+{{- end }}
+
+The panel trusts the X-Auth-Request-Email header, so only your auth proxy may reach
+the service{{ if not .Values.networkPolicy.enabled }}. Set networkPolicy.enabled=true to enforce that{{ end }}.
+{{- if .Values.persistence.enabled }}
+
+Back up the {{ include "email-manager.claimName" . }} volume: it holds the key that seals mailbox secrets.
+{{- end }}

@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-manager
+spec:
+  # One replica: runs are serialised by a database lock and the panel is single-tenant.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: server
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: server
+          image: email-manager
+          envFrom:
+            - configMapRef:
+                name: email-manager-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: email-manager, key: database-url }
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: { name: email-manager, key: openai-api-key, optional: true }
+            - name: TOKEN_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef: { name: email-manager, key: token-encryption-key, optional: true }
+            - name: INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef: { name: email-manager, key: internal-token, optional: true }
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: internal
+              containerPort: 8081
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: data
+          persistentVolumeClaim:
+            claimName: email-manager-data

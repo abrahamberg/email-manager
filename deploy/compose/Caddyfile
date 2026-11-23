@@ -1,0 +1,10 @@
+# Basic auth as the login. The user name is the panel user's email address, and Caddy
+# replaces any client-sent X-Auth-Request-Email with it before proxying.
+{$SITE_ADDRESS::80} {
+	basic_auth {
+		{$PANEL_USER} {$PANEL_PASSWORD_HASH}
+	}
+	reverse_proxy app:8080 {
+		header_up X-Auth-Request-Email {http.auth.user.id}
+	}
+}

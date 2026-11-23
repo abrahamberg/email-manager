@@ -1,0 +1,60 @@
+# Everything on one machine: Postgres, the app (runs itself every RUN_INTERVAL_MINUTES)
+# and Caddy as the login in front. Copy .env.example to .env first.
+name: email-manager
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: email
+      POSTGRES_DB: email
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "email"]
+      interval: 5s
+      retries: 20
+
+  app:
+    image: ${IMAGE:-ghcr.io/abrahamberg/email-manager:latest}
+    build: ../..
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://email:${POSTGRES_PASSWORD}@db:5432/email
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ALLOWED_EMAILS: ${PANEL_USER:?set PANEL_USER in .env}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      DRY_RUN: ${DRY_RUN:-true}
+      RUN_INTERVAL_MINUTES: ${RUN_INTERVAL_MINUTES:-15}
+      EMBEDDING_CACHE_DIR: /data/models
+    volumes:
+      - data:/data
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    # No ports: only Caddy can reach the app, which trusts the X-Auth-Request-Email header.
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "${LISTEN:-127.0.0.1:8080}:80"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      PANEL_USER: ${PANEL_USER}
+      PANEL_PASSWORD_HASH: ${PANEL_PASSWORD_HASH:?set PANEL_PASSWORD_HASH in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy:/data
+
+volumes:
+  db:
+  data:
+  caddy:

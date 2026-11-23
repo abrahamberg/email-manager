@@ -1,0 +1,26 @@
+# ingress-nginx with oauth2-proxy at /oauth2 on the same host. For other controllers, use
+# their forward-auth feature and pass the X-Auth-Request-Email response header.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: email-manager
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-Email"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [email.example.com]
+      secretName: email-manager-tls
+  rules:
+    - host: email.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: email-manager
+                port:
+                  name: http

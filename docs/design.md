@@ -1,6 +1,6 @@
 # Email Manager: research and design proposal
 
-Status: **proposal, for review**. Nothing is built yet.
+Status: implemented. This was the design proposal; the code now follows it, with the changes noted inline.
 
 ## 1. Goal in one paragraph
 
@@ -9,7 +9,7 @@ sorts every new message through a cheap-to-expensive pipeline: spam out,
 low-value repetitive mail into a digest, mail that needs an answer gets a
 reply (drafted or, where policy allows, sent), and mail that needs real
 attention becomes a task. A React + TypeScript control panel behind the
-existing oauth2-proxy shows what was done, why, and lets you undo it.
+authenticating proxy (such as oauth2-proxy) shows what was done, why, and lets you undo it.
 
 **Logic first, AI last.** Every step that can be decided by headers, rules or
 an existing spam engine is decided there. Only what is left reaches the model,
@@ -138,7 +138,7 @@ what the AI said), which is what makes undo and trust possible.
 
 - **Functional core, imperative shell.** Rule matching, low-value detection,
   reply policy and email compaction are pure functions: plain data in, plain
-  data out, tested without mocks. IMAP, HTTP, Postgres and Claude live in
+  data out, tested without mocks. IMAP, HTTP, Postgres and the AI provider live in
   adapters at the edge.
 - **Ports and adapters (dependency inversion).** The pipeline depends on small
   interfaces: `Mailbox`, `SpamCheck`, `Classifier`, `RuleSource`, `TaskStore`,
@@ -196,14 +196,14 @@ Email content is untrusted input and can contain prompt injection. So:
 ### 3.5 Deployment on Kubernetes
 
 ```
-            oauth2-proxy (existing)
+            auth proxy (oauth2-proxy)
                    │  X-Auth-Request-Email
                    ▼
  ┌──────────── Deployment (1 replica) ───────────────┐
  │  email-manager: API + static React panel          │
  └───────────────────────────────────────────────────┘
  CronJob (every N minutes, same image): the worker
- rspamd Deployment + Service · shared Postgres (shared-namespace)
+ rspamd Deployment + Service · Postgres
 ```
 
 - The CronJob runs the worker from the same image. State lives in the shared

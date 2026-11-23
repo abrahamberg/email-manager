@@ -1,0 +1,16 @@
+# The app trusts the auth header, so only the ingress controller may reach the http port.
+# The internal port is not listed: nothing outside the pod can trigger runs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: email-manager
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: http
+      from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx

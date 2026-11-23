@@ -1,0 +1,18 @@
+# Copy this folder, edit the values, then: kubectl apply -k .
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: email-manager
+resources:
+  - namespace.yaml
+  - ../../base
+  - ingress.yaml
+  - networkpolicy.yaml
+configMapGenerator:
+  - name: email-manager-config
+    behavior: merge
+    literals:
+      - ALLOWED_EMAILS=you@example.com
+      - PUBLIC_URL=https://email.example.com
+images:
+  - name: ghcr.io/abrahamberg/email-manager
+    newTag: latest # pin a sha-xxxxxxx tag

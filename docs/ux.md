@@ -1,6 +1,6 @@
 # Control panel: UX and user journey
 
-Status: **proposal**, implemented as a clickable mock in `web/` (mock data, no backend).
+Status: implemented. `web/` runs against the real API in production builds and against mock data in `npm run dev`.
 
 ## 1. What the user actually wants
 

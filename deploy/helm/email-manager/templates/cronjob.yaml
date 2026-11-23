@@ -1,0 +1,42 @@
+{{- if eq .Values.schedule.mode "cronjob" }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "email-manager.fullname" . }}-worker
+  labels:
+    {{- include "email-manager.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule.cron | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ .Values.schedule.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.schedule.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            {{- include "email-manager.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: worker
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            {{- include "email-manager.podSecurityContext" . | nindent 12 }}
+          {{- with include "email-manager.scheduling" . }}{{ . | trim | nindent 10 }}{{ end }}
+          containers:
+            - name: worker
+              image: {{ include "email-manager.image" . }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args: ["dist/worker.js"]
+              env:
+                {{- include "email-manager.env" . | nindent 16 }}
+              resources:
+                {{- toYaml .Values.workerResources | nindent 16 }}
+              securityContext:
+                {{- include "email-manager.securityContext" . | nindent 16 }}
+              volumeMounts:
+                {{- include "email-manager.volumeMounts" . | nindent 16 }}
+          volumes:
+            {{- include "email-manager.volumes" . | nindent 12 }}
+{{- end }}

@@ -1,0 +1,11 @@
+# Instance keys and the embedding model cache. Back it up: the key seals mailbox secrets.
+# The server and the CronJob both mount it: ReadWriteMany, or ReadWriteOnce on one node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: email-manager-data
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 1Gi

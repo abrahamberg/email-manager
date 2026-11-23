@@ -1,0 +1,62 @@
+{{- if and (not .Values.persistence.enabled) (not .Values.secrets.existingSecret) }}
+{{- fail "without persistence, put token-encryption-key and internal-token in secrets.existingSecret" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "email-manager.fullname" . }}
+  labels:
+    {{- include "email-manager.labels" . | nindent 4 }}
+spec:
+  # One replica: runs are serialised by a database lock and the panel is single-tenant.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "email-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "email-manager.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "email-manager.podSecurityContext" . | nindent 8 }}
+      {{- with include "email-manager.scheduling" . }}{{ . | trim | nindent 6 }}{{ end }}
+      containers:
+        - name: server
+          image: {{ include "email-manager.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- include "email-manager.env" . | nindent 12 }}
+            {{- if eq .Values.schedule.mode "inProcess" }}
+            - name: RUN_INTERVAL_MINUTES
+              value: {{ .Values.schedule.intervalMinutes | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: internal
+              containerPort: 8081
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- include "email-manager.securityContext" . | nindent 12 }}
+          volumeMounts:
+            {{- include "email-manager.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "email-manager.volumes" . | nindent 8 }}

@@ -1,0 +1,22 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- if not .Values.networkPolicy.allowFrom }}
+{{- fail "networkPolicy.allowFrom needs at least one peer: an empty list would allow everyone" }}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "email-manager.fullname" . }}
+  labels:
+    {{- include "email-manager.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "email-manager.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress]
+  # The internal port is not listed, so nothing outside the pod can trigger runs.
+  ingress:
+    - ports:
+        - port: http
+      from:
+        {{- toYaml .Values.networkPolicy.allowFrom | nindent 8 }}
+{{- end }}

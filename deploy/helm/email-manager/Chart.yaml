@@ -1,0 +1,9 @@
+apiVersion: v2
+name: email-manager
+description: A scheduled email manager - rules and spam checks first, AI only where needed.
+type: application
+version: 0.1.0
+appVersion: "latest"
+home: https://github.com/abrahamberg/email-manager
+sources:
+  - https://github.com/abrahamberg/email-manager
