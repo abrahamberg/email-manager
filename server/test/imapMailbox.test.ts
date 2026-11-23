@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ImapFlowOptions } from "imapflow";
-import { imapMailbox, toKeyword } from "../src/mail/imapMailbox.js";
+import { imapMailbox } from "../src/mail/imapMailbox.js";
+import { toKeyword } from "../src/mail/imap/messages.js";
 import type { ImapClient } from "../src/mail/imap/client.js";
 import type { MailAuth } from "../src/ports.js";
 

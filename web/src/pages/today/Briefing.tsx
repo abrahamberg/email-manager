@@ -21,7 +21,7 @@ export function Briefing() {
   const summary = summarizeBriefing(data);
   return (
     <header className="briefing">
-      <h1>{greeting()}, Daniel</h1>
+      <h1>{greeting()}</h1>
       <p className="lead">
         Of {plural(summary.arrived, "email")} since {formatTime(data.briefing.since)}, <strong>{verdict(summary)}</strong>
       </p>

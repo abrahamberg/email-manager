@@ -13,7 +13,7 @@ const unordered: Decision[] = [
     why: "Anna is a frequent contact and asked a direct question with a deadline.",
     confidence: 0.86,
     draft:
-      "Hi Anna,\n\nSure. I'll send the Q4 revenue table by Friday afternoon so you have it well before Monday.\n\nBest,\nDaniel",
+      "Hi Anna,\n\nSure. I'll send the Q4 revenue table by Friday afternoon so you have it well before Monday.\n\nBest,\nAlex",
   },
   {
     kind: "choice",
@@ -55,7 +55,7 @@ const unordered: Decision[] = [
     email: lifeEmails.party,
     why: "I answer invitations for Elsa only after you've said yes once.",
     confidence: 0.8,
-    draft: "Hi Lina,\n\nThanks! Elsa would love to come on Saturday. I'll drop her off at Lekland at 14:00.\n\nBest,\nDaniel",
+    draft: "Hi Lina,\n\nThanks! Elsa would love to come on Saturday. I'll drop her off at Lekland at 14:00.\n\nBest,\nAlex",
   },
   {
     kind: "task",
@@ -76,7 +76,7 @@ const unordered: Decision[] = [
     email: emails.markThread,
     why: "You asked Mark a question 5 days ago and he hasn't answered.",
     waitingDays: 5,
-    draft: "Hi Mark,\n\nA quick nudge on the pilot API keys. Any update on timing?\n\nThanks,\nDaniel",
+    draft: "Hi Mark,\n\nA quick nudge on the pilot API keys. Any update on timing?\n\nThanks,\nAlex",
   },
   {
     kind: "ruleProposal",

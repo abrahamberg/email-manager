@@ -24,12 +24,12 @@ export const runs: Run[] = [
 export const settings: Settings = {
   dryRun: false,
   replies: {
-    signature: "Best,\nDaniel",
+    signature: "Best,\nAlex",
     knownContactsOnly: true,
     topics: ["acknowledge", "confirmAppointment"],
     neverAutoReplyTo: ["contoso.com", "*.gov"],
   },
-  mailbox: { host: "imap.example.com", user: "daniel@example.com", connected: true },
+  mailbox: { host: "imap.example.com", user: "alex@example.com", connected: true },
   dailySendCap: 10,
   quietHours: { from: "19:00", to: "07:30" },
   briefingTimes: ["08:00", "13:00", "17:00"],
@@ -42,7 +42,7 @@ export const profile: MailboxProfile = {
   emailsRead: 1240,
   peopleYouReplyTo: 86,
   newsletters: 41,
-  toneSummary: "Short and friendly. You open with “Hi <name>,”, rarely use exclamation marks, and sign off with “Best, Daniel”.",
+  toneSummary: "Short and friendly. You open with “Hi <name>,”, rarely use exclamation marks, and sign off with “Best, Alex”.",
   wouldHaveDone: [
     { outcome: "junk", count: 212 },
     { outcome: "digest", count: 604 },

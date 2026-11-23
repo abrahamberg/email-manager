@@ -13,16 +13,16 @@ function needsYou(score: number, note: string, tokens: number): TraceStep[] {
 }
 
 function detail(body: string, trace: TraceStep[], extra: Partial<EmailDetail> = {}): EmailDetail {
-  return { body, to: "daniel@example.com", auth: PASS, spamScore: 0.4, bulkHeaders: [], trace, ...extra };
+  return { body, to: "alex@example.com", auth: PASS, spamScore: 0.4, bulkHeaders: [], trace, ...extra };
 }
 
 export const details: Record<string, EmailDetail> = {
   [emails.anna.id]: detail(
-    "Hi Daniel,\n\nThe board pack goes out Monday morning. Could you send me the Q4 revenue table when you have a minute? The same format as Q3 is perfect.\n\nThanks!\nAnna",
+    "Hi Alex,\n\nThe board pack goes out Monday morning. Could you send me the Q4 revenue table when you have a minute? The same format as Q3 is perfect.\n\nThanks!\nAnna",
     needsYou(0.2, "Direct question from a frequent contact, deadline Monday. Drafted a reply in your usual tone.", 1420),
   ),
   [emails.meetingInvite.id]: detail(
-    "Hi Daniel,\n\nThanks for applying to the Staff Backend Engineer role at Fabrikam. The team works mostly in C# and Kotlin. Would Tuesday or Wednesday morning work for a 30 minute intro call? Happy to send an invite.\n\nBest,\nJonas",
+    "Hi Alex,\n\nThanks for applying to the Staff Backend Engineer role at Fabrikam. The team works mostly in C# and Kotlin. Would Tuesday or Wednesday morning work for a 30 minute intro call? Happy to send an invite.\n\nBest,\nJonas",
     needsYou(0.9, "Job search: hiring manager asks for an intro call. Checked your calendar for free slots.", 1650),
   ),
   [emails.contract.id]: detail(
@@ -30,11 +30,11 @@ export const details: Record<string, EmailDetail> = {
     needsYou(0.6, "Legal document with a deadline and a price change. Never answered automatically.", 980),
   ),
   [emails.markThread.id]: detail(
-    "Hi Mark,\n\nJust checking whether the API keys for the pilot are ready? We'd like to start on Monday.\n\nThanks,\nDaniel",
+    "Hi Mark,\n\nJust checking whether the API keys for the pilot are ready? We'd like to start on Monday.\n\nThanks,\nAlex",
     [{ stage: "rules", result: "decided", note: "Follow-up check: you wrote last, no answer in 5 days" }, skipped("spam"), skipped("lowValue"), { stage: "ai", result: "decided", note: "Drafted a short nudge", tokens: 610 }],
   ),
   [emails.recruiter.id]: detail(
-    "Hi Daniel,\n\nI came across your profile and think you'd be a great fit for a Staff Engineer role at a fast-growing fintech. Open to a quick chat?\n\nPriya",
+    "Hi Alex,\n\nI came across your profile and think you'd be a great fit for a Staff Engineer role at a fast-growing fintech. Open to a quick chat?\n\nPriya",
     needsYou(2.1, "Unsolicited recruiter mail. You ignored the last 9 like this, so I suggest a rule instead of asking every time.", 890),
   ),
   [emails.substack.id]: detail(
@@ -52,9 +52,9 @@ export const details: Record<string, EmailDetail> = {
     { auth: { spf: "fail", dkim: "none", dmarc: "fail" }, spamScore: 14.2 },
   ),
   [emails.github.id]: detail(
-    "abrahamberg commented on #3:\n\n> looks good to me\n\nReply to this email directly or view it on GitHub.",
+    "sam-dev commented on #3:\n\n> looks good to me\n\nReply to this email directly or view it on GitHub.",
     [rulesPassed, spamPassed(0.3), { stage: "lowValue", result: "decided", note: "Notification (List-Id) with no question for you" }, skipped("ai")],
-    { bulkHeaders: ["List-Id: email-manager.abrahamberg.github.com", "List-Unsubscribe"] },
+    { bulkHeaders: ["List-Id: email-manager.example.github.com", "List-Unsubscribe"] },
   ),
   [emails.sale.id]: detail(
     "Our biggest sale of the year starts now: 40% off everything until Sunday at midnight.",

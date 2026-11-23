@@ -15,6 +15,11 @@ describe("loadConfig", () => {
     expect(c.TOKEN_ENCRYPTION_KEY).toBeUndefined();
   });
 
+  it("leaves the in-process schedule off unless RUN_INTERVAL_MINUTES is set", () => {
+    expect(loadConfig(base).RUN_INTERVAL_MINUTES).toBeUndefined();
+    expect(loadConfig({ ...base, RUN_INTERVAL_MINUTES: "15" }).RUN_INTERVAL_MINUTES).toBe(15);
+  });
+
   it("parses DRY_RUN=false", () => {
     expect(loadConfig({ ...base, DRY_RUN: "false" }).DRY_RUN).toBe(false);
   });
@@ -30,6 +35,7 @@ describe("loadConfig", () => {
     ["INTERNAL_TOKEN", { INTERNAL_TOKEN: "short" }],
     ["TOKEN_ENCRYPTION_KEY", { TOKEN_ENCRYPTION_KEY: "AAAA" }],
     ["PORT", { PORT: "99999" }],
+    ["RUN_INTERVAL_MINUTES", { RUN_INTERVAL_MINUTES: "0" }],
   ])("fails naming %s", (name, patch) => {
     expect(() => loadConfig({ ...base, ...patch })).toThrow(name);
   });

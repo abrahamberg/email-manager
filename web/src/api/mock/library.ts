@@ -24,7 +24,7 @@ export const digest: DigestGroup[] = [
   {
     id: "g2", sender: emails.github.from, category: "notification", state: "normal",
     entries: [
-      { subject: "[email-manager] New comment on #3", summary: "abrahamberg approved the design doc." },
+      { subject: "[email-manager] New comment on #3", summary: "sam-dev approved the design doc." },
       { subject: "[email-manager] Branch pushed", summary: "A new branch with the UX mock was pushed." },
     ],
   },

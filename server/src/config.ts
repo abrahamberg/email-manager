@@ -39,6 +39,9 @@ const envSchema = z.object({
   DRY_RUN: bool.default(true),
   AI_DAILY_BUDGET_USD: z.coerce.number().nonnegative().default(0.5),
   PUBLIC_URL: z.url().optional(),
+  STATIC_DIR: z.string().trim().min(1).default("/app/public"),
+  /** Runs inside the server every N minutes, for setups without a scheduler (docker compose, one VM). */
+  RUN_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(1440).optional(),
 });
 
 export type Config = z.infer<typeof envSchema>;

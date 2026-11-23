@@ -14,7 +14,7 @@ function viaHeaders(note: string): TraceStep[] {
 }
 
 function detail(body: string, trace: TraceStep[], bulkHeaders: string[] = []): EmailDetail {
-  return { body, to: "daniel@example.com", auth: { spf: "pass", dkim: "pass", dmarc: "pass" }, spamScore: 0.3, bulkHeaders, trace };
+  return { body, to: "alex@example.com", auth: { spf: "pass", dkim: "pass", dmarc: "pass" }, spamScore: 0.3, bulkHeaders, trace };
 }
 
 const LIST = ["List-Id: foraldrar-3b.solberga.example"];
@@ -26,7 +26,7 @@ export const lifeDetails: Record<string, EmailDetail> = {
     LIST,
   ),
   [e.carpool.id]: detail(
-    "Hi Daniel, still OK that you drive Thursday and I take next week? /Peter",
+    "Hi Alex, still OK that you drive Thursday and I take next week? /Peter",
     viaAi("Personal mail", "Matches what you agreed on 14 Nov. Replied “Yes, I'll drive Thursday”.", 640),
   ),
   [e.parentsMeeting.id]: detail(
@@ -60,7 +60,7 @@ export const lifeDetails: Record<string, EmailDetail> = {
     ["List-Unsubscribe", "Precedence: bulk"],
   ),
   [e.nordpay.id]: detail(
-    "Hi Daniel,\n\nThanks for the first interview! The next step is a small take-home case in Java or C#. It takes about 3 hours. Please send it by Tuesday 1 Dec.\n\nSara",
+    "Hi Alex,\n\nThanks for the first interview! The next step is a small take-home case in Java or C#. It takes about 3 hours. Please send it by Tuesday 1 Dec.\n\nSara",
     viaAi("Personal mail", "A deadline in your job search. Added it to Coming up and labelled Job search. No reply needed yet.", 700),
   ),
   [e.meetup.id]: detail(

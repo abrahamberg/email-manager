@@ -52,7 +52,7 @@ export const emails = {
   ),
   github: email(
     "m8", "GitHub", "notifications@github.com", "[email-manager] New comment on #3",
-    "2026-11-21T11:02:00Z", "abrahamberg commented: looks good to me.", "notification", "work",
+    "2026-11-21T11:02:00Z", "sam-dev commented: looks good to me.", "notification", "work",
   ),
   sale: email(
     "m9", "Outdoor Gear Co", "deals@outdoorgear.example", "48h Black Friday: 40% off everything",

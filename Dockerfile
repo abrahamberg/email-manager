@@ -6,7 +6,7 @@ COPY server/package.json server/
 COPY web/package.json web/
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN npm run build && mkdir -p /empty
 
 # The embedder is kept out of the bundle: it loads native ONNX and image binaries.
 FROM node:22 AS runtime-deps
@@ -21,6 +21,9 @@ WORKDIR /app
 COPY --from=runtime-deps /deps/node_modules ./node_modules
 COPY --from=build /src/server/dist ./dist
 COPY --from=build /src/web/dist ./public
+# Owned by nonroot so fresh Docker volumes mounted here are writable (Kubernetes uses fsGroup).
+COPY --from=build --chown=65532:65532 /empty /data
+COPY --from=build --chown=65532:65532 /empty /models
 ENV NODE_ENV=production
 USER nonroot
 EXPOSE 8080 8081

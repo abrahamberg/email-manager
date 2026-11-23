@@ -1,6 +1,8 @@
-import type { HeaderScan, MailAuth, MailCredentials, Mailbox, MailboxState, RawMessage } from "../ports.js";
+import type { HeaderScan, MailAuth, Mailbox, MailboxState, RawMessage } from "../ports.js";
 import { imapflowClient, type ImapClient, type ImapClientFactory } from "./imap/client.js";
+import { toAuth, transport } from "./imap/connectOptions.js";
 import { resolveFolders, type Folders } from "./imap/folders.js";
+import { draftExists, findByMessageId, headerValue, toKeyword } from "./imap/messages.js";
 
 /** The headers bulk detection and sender grouping read; nothing else leaves the server. */
 const SCAN_HEADERS = ["from", "list-id", "list-unsubscribe", "precedence", "auto-submitted", "x-auto-response-suppress"];
@@ -123,41 +125,4 @@ export function imapMailbox(options: ImapMailboxOptions, createClient: ImapClien
       else c?.close();
     },
   };
-}
-
-// Why: without doSTARTTLS a man in the middle can strip the STARTTLS offer and read the password.
-function transport(o: ImapMailboxOptions) {
-  return {
-    host: o.host, port: o.port, secure: o.secure,
-    ...(o.servername && { servername: o.servername }),
-    ...(!o.secure && !o.allowPlaintext && { doSTARTTLS: true }),
-  };
-}
-
-function toAuth(creds: MailCredentials) {
-  return creds.kind === "password"
-    ? { user: creds.user, pass: creds.password }
-    : { user: creds.user, accessToken: creds.accessToken };
-}
-
-/** IMAP keywords are atoms: no spaces, parentheses, quotes, wildcards or backslashes. */
-export function toKeyword(label: string): string {
-  return label.replace(/[^\x21-\x7e]|[(){%*"\\\]]/g, "_");
-}
-
-function headerValue(rfc822: string, name: string): string | undefined {
-  const head = rfc822.split(/\r?\n\r?\n/, 1)[0] ?? "";
-  const match = new RegExp(`^${name}:[ \\t]*(.+)$`, "im").exec(head);
-  return match?.[1]?.trim();
-}
-
-async function findByMessageId(c: ImapClient, folder: string, messageId: string): Promise<number[]> {
-  await c.mailboxOpen(folder);
-  const found = await c.search({ header: { "message-id": messageId } }, { uid: true });
-  return Array.isArray(found) ? found : [];
-}
-
-// Why: append has no natural idempotency, so a retried append is detected by Message-ID.
-async function draftExists(c: ImapClient, drafts: string, messageId: string): Promise<boolean> {
-  return (await findByMessageId(c, drafts, messageId)).length > 0;
 }
