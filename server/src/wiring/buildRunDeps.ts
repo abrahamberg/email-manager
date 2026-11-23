@@ -2,6 +2,7 @@
 import type { Config } from "../config";
 import type { InstanceKeys } from "../keys/instanceKeys";
 import { DEFAULT_SETTINGS } from "../life/buildAppData";
+import { oauthProviders } from "../mail/auth/providers";
 import { mailboxService } from "../mailboxes/service";
 import type { LifeDeps } from "../pipeline/lifeDeps";
 import type { RunDeps } from "../pipeline/runMailbox";
@@ -25,7 +26,7 @@ export function buildRunDeps(config: Config, db: Db, store: Store, keys: Instanc
   const service = mailboxService(store.mailboxes, store.tokens, keys.encryptionKey);
   return {
     lock: store.runLock,
-    mailboxes: () => mailboxSources({ service, store, encryptionKey: keys.encryptionKey, connection: over.connection }),
+    mailboxes: () => mailboxSources({ service, store, encryptionKey: keys.encryptionKey, connection: { providers: oauthProviders(config.MICROSOFT_TENANT_ID), ...over.connection } }),
     outcomes: store.outcomes,
     rules: store.rules,
     senders: store.senders,

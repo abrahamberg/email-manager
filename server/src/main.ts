@@ -4,6 +4,7 @@ import { loadConfig, type Config } from "./config";
 import { createApp } from "./http/app";
 import { backgroundRunner, createInternalApp } from "./http/internalApp";
 import { loadInstanceKeys, type InstanceKeys } from "./keys/instanceKeys";
+import { oauthProviders } from "./mail/auth/providers";
 import { mailboxService } from "./mailboxes/service";
 import { localEmbedder } from "./search/localEmbedder";
 import { vectorSearch } from "./search/vectorSearch";
@@ -23,6 +24,7 @@ function panelApp(config: Config, db: Db, store: Store, keys: InstanceKeys) {
     tokens: store.tokens,
     encryptionKey: keys.encryptionKey,
     publicUrl: config.PUBLIC_URL,
+    providers: oauthProviders(config.MICROSOFT_TENANT_ID),
   };
   return createApp({
     allowedEmails: config.ALLOWED_EMAILS,

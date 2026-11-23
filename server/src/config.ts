@@ -39,6 +39,8 @@ const envSchema = z.object({
   DRY_RUN: bool.default(true),
   AI_DAILY_BUDGET_USD: z.coerce.number().nonnegative().default(0.5),
   PUBLIC_URL: z.url().optional(),
+  /** Entra tenant id or domain for Office 365 sign-in; "common" suits multi-tenant apps. */
+  MICROSOFT_TENANT_ID: z.string().trim().regex(/^[A-Za-z0-9.-]{1,253}$/, "must be a tenant id or domain").default("common"),
   STATIC_DIR: z.string().trim().min(1).default("/app/public"),
   /** Runs inside the server every N minutes, for setups without a scheduler (docker compose, one VM). */
   RUN_INTERVAL_MINUTES: z.coerce.number().int().min(1).max(1440).optional(),

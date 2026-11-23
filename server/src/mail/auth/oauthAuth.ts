@@ -1,5 +1,5 @@
 import type { MailAuth, MailCredentials } from "../../ports.js";
-import { providers, type OAuthProviderId } from "./providers.js";
+import type { OAuthProvider } from "./providers.js";
 import { requestToken, ReconnectNeededError, type FetchLike } from "./tokenEndpoint.js";
 import { openGrant, sealGrant, type StoredGrant, type TokenStore } from "./tokenStore.js";
 
@@ -11,7 +11,7 @@ interface CachedToken {
 }
 
 export function oauthAuth(
-  providerId: OAuthProviderId,
+  provider: OAuthProvider,
   clientId: string,
   clientSecret: string,
   tokenStore: TokenStore,
@@ -19,7 +19,6 @@ export function oauthAuth(
   fetchImpl: FetchLike = fetch,
   clock: () => number = Date.now,
 ): MailAuth {
-  const provider = providers[providerId];
   let cached: (CachedToken & { user: string }) | undefined;
   let inflight: Promise<MailCredentials> | undefined;
 
@@ -39,7 +38,7 @@ export function oauthAuth(
 
   async function loadGrant(): Promise<StoredGrant> {
     const blob = await tokenStore.load();
-    if (!blob) throw new ReconnectNeededError(providerId);
+    if (!blob) throw new ReconnectNeededError(provider.id);
     return openGrant(blob, encryptionKey);
   }
 

@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { connectRoutes } from "../../src/http/routes/connect.js";
+import { oauthProviders } from "../../src/mail/auth/providers.js";
 import { s256Challenge } from "../../src/mail/auth/pkce.js";
 import { openGrant } from "../../src/mail/auth/tokenStore.js";
 import { fakeIdToken, fakeTokenEndpoint, key, memoryTokenStore } from "./fakes.js";
 
 const MAILBOX = "0b7c6a52-6f0e-4c39-9d0a-1f4e2b3c4d5e";
 
-function setup(responses: { status?: number; body: unknown }[] = []) {
+function setup(responses: { status?: number; body: unknown }[] = [], tenant?: string) {
   const store = memoryTokenStore();
   const endpoint = fakeTokenEndpoint(responses);
   const providerOf: Record<string, "gmail" | "office365"> = { [MAILBOX]: "gmail", "mb-o365": "office365" };
@@ -14,6 +15,7 @@ function setup(responses: { status?: number; body: unknown }[] = []) {
     publicUrl: "https://mail.example.org",
     client: async (id) => providerOf[id] && { provider: providerOf[id], clientId: "cid", clientSecret: "secret", tokenStore: store },
     encryptionKey: key,
+    providers: oauthProviders(tenant),
     fetchImpl: endpoint.impl,
   });
   return { app, store, endpoint };
@@ -37,6 +39,12 @@ describe("connect routes", () => {
     expect(rawCookie).toMatch(/HttpOnly/);
     expect(rawCookie).toMatch(/SameSite=Lax/);
     expect(rawCookie).toMatch(/Secure/);
+  });
+
+  it("signs in at the configured Microsoft tenant", async () => {
+    const { app } = setup([], "contoso.onmicrosoft.com");
+    const { location } = await start(app, "office365");
+    expect(location.origin + location.pathname).toBe("https://login.microsoftonline.com/contoso.onmicrosoft.com/oauth2/v2.0/authorize");
   });
 
   it("adds offline access and consent for Gmail", async () => {

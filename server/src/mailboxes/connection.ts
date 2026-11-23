@@ -1,7 +1,7 @@
 import { lazyMailbox } from "../mail/lazyMailbox";
 import { oauthAuth } from "../mail/auth/oauthAuth";
 import { passwordAuth } from "../mail/auth/passwordAuth";
-import { providers, type OAuthProviderId } from "../mail/auth/providers";
+import { providers, type OAuthProviderId, type OAuthProviders } from "../mail/auth/providers";
 import type { FetchLike } from "../mail/auth/tokenEndpoint";
 import type { TokenStore } from "../mail/auth/tokenStore";
 import { imapMailbox } from "../mail/imapMailbox";
@@ -13,6 +13,7 @@ import type { OpenedMailbox } from "./service";
 export interface ConnectionDeps {
   tokenStore: (mailboxId: string) => TokenStore;
   encryptionKey: Buffer;
+  providers?: OAuthProviders;
   lookup?: Lookup;
   fetchImpl?: FetchLike;
   open?: typeof imapMailbox;
@@ -31,8 +32,9 @@ export function mailboxConnection(m: OpenedMailbox, deps: ConnectionDeps): Mailb
 }
 
 function oauthMailbox(id: OAuthProviderId, client: { clientId: string; clientSecret: string }, mailboxId: string, deps: ConnectionDeps) {
-  const { host, port } = providers[id].imap;
-  const auth = oauthAuth(id, client.clientId, client.clientSecret, deps.tokenStore(mailboxId), deps.encryptionKey, deps.fetchImpl);
+  const provider = (deps.providers ?? providers)[id];
+  const { host, port } = provider.imap;
+  const auth = oauthAuth(provider, client.clientId, client.clientSecret, deps.tokenStore(mailboxId), deps.encryptionKey, deps.fetchImpl);
   return (deps.open ?? imapMailbox)({ host, port, secure: true, auth });
 }
 

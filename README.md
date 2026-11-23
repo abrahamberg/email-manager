@@ -246,6 +246,7 @@ Port 8081 is the internal run trigger (`POST /internal/runs` with the bearer tok
 | `ALLOWED_EMAILS` | yes | | Comma-separated addresses or `@domain`. |
 | `OPENAI_API_KEY` | no | | Secret. Without it, no AI steps. |
 | `PUBLIC_URL` | no | | The panel's https URL. Needed for Office 365 / Gmail sign-in. |
+| `MICROSOFT_TENANT_ID` | no | `common` | Entra tenant ID or domain. Set it when the Office 365 app registration is single-tenant. |
 | `DRY_RUN` | no | `true` | `false` lets runs move, label and draft. The panel can pause, but not lift an env dry-run. |
 | `RUN_INTERVAL_MINUTES` | no | | Server runs itself on this interval (when there is no CronJob). |
 | `DATA_DIR` | no | `/data` | Instance keys. Shared by server and worker. |
@@ -262,9 +263,19 @@ In the panel, **Set up** tests and saves a mailbox. Passwords and tokens are sea
 with AES-256-GCM before they reach Postgres and are never shown again.
 
 - **IMAP/SMTP:** host, port and an app password. TLS is required.
-- **Office 365:** register an app in Microsoft Entra ID with the redirect URI
-  `PUBLIC_URL/api/connect/office365/callback` and the delegated permissions
-  `IMAP.AccessAsUser.All`, `SMTP.Send` and `offline_access`; paste its client id (and secret).
+- **Office 365:** register an app in Microsoft Entra ID (App registrations, New registration):
+  - **Supported account types:** "Accounts in this organizational directory only"
+    (single tenant) is fine; then set `MICROSOFT_TENANT_ID` to the Directory (tenant) ID
+    from the app's Overview page. With the default `common`, the registration must be
+    multi-tenant, or sign-in fails with `AADSTS50194`.
+  - **Redirect URI:** platform **Web**, `PUBLIC_URL/api/connect/office365/callback`,
+    e.g. `https://email.example.com/api/connect/office365/callback`. It must match exactly.
+  - **API permissions:** Microsoft Graph, delegated: `IMAP.AccessAsUser.All`, `SMTP.Send`,
+    `offline_access`, `openid` and `email`. Grant admin consent if your tenant requires it.
+  - **Certificates & secrets:** create a client secret, then paste the Application (client) ID
+    and the secret's **Value** (not its ID) in Set up.
+  - IMAP must be enabled for the mailbox in Exchange (it is by default; check the user's
+    Mail apps settings in the Microsoft 365 admin center if sign-in works but IMAP is refused).
 - **Gmail:** create an OAuth client (Web application) in Google Cloud with the redirect
   URI `PUBLIC_URL/api/connect/gmail/callback` and the `https://mail.google.com/` scope.
 

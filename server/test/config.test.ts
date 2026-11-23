@@ -20,6 +20,11 @@ describe("loadConfig", () => {
     expect(loadConfig({ ...base, RUN_INTERVAL_MINUTES: "15" }).RUN_INTERVAL_MINUTES).toBe(15);
   });
 
+  it("signs in to Office 365 at the common tenant unless MICROSOFT_TENANT_ID is set", () => {
+    expect(loadConfig(base).MICROSOFT_TENANT_ID).toBe("common");
+    expect(loadConfig({ ...base, MICROSOFT_TENANT_ID: " contoso.onmicrosoft.com " }).MICROSOFT_TENANT_ID).toBe("contoso.onmicrosoft.com");
+  });
+
   it("parses DRY_RUN=false", () => {
     expect(loadConfig({ ...base, DRY_RUN: "false" }).DRY_RUN).toBe(false);
   });
@@ -36,6 +41,7 @@ describe("loadConfig", () => {
     ["TOKEN_ENCRYPTION_KEY", { TOKEN_ENCRYPTION_KEY: "AAAA" }],
     ["PORT", { PORT: "99999" }],
     ["RUN_INTERVAL_MINUTES", { RUN_INTERVAL_MINUTES: "0" }],
+    ["MICROSOFT_TENANT_ID", { MICROSOFT_TENANT_ID: "evil.example/x?" }],
   ])("fails naming %s", (name, patch) => {
     expect(() => loadConfig({ ...base, ...patch })).toThrow(name);
   });

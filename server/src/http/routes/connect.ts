@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { deleteCookie, getSignedCookie, setSignedCookie } from "hono/cookie";
 import { accountEmail } from "../../mail/auth/accountEmail.js";
 import { randomToken, s256Challenge } from "../../mail/auth/pkce.js";
-import { isProviderId, providers, type OAuthProvider, type OAuthProviderId } from "../../mail/auth/providers.js";
+import { isProviderId, providers as defaultProviders, type OAuthProvider, type OAuthProviderId, type OAuthProviders } from "../../mail/auth/providers.js";
 import { requestToken, type FetchLike } from "../../mail/auth/tokenEndpoint.js";
 import { sealGrant, type TokenStore } from "../../mail/auth/tokenStore.js";
 
@@ -20,6 +20,7 @@ export interface ConnectDeps {
   /** Undefined unless the mailbox exists, uses OAuth, and has its client id and secret saved. */
   client(mailboxId: string): Promise<MailboxClient | undefined>;
   encryptionKey: string | Buffer;
+  providers?: OAuthProviders;
   fetchImpl?: FetchLike;
 }
 
@@ -31,6 +32,7 @@ const STATE_SEP = "~";
 export function connectRoutes(deps: ConnectDeps): Hono {
   const app = new Hono();
   const fetchImpl = deps.fetchImpl ?? fetch;
+  const providers = deps.providers ?? defaultProviders;
   const secret = cookieSecret(deps.encryptionKey);
   const base = deps.publicUrl.replace(/\/+$/, "");
   const redirectUri = (p: OAuthProvider) => `${base}/api/connect/${p.id}/callback`;
