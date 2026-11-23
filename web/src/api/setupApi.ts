@@ -21,6 +21,8 @@ export interface MailboxView {
   smtpHost?: string;
   smtpPort?: number;
   oauthClientId?: string;
+  /** Office 365 only: the Entra tenant id or domain. Empty means the common endpoint. */
+  oauthTenant?: string;
   hasClientSecret: boolean;
   hasPassword: boolean;
   enabled: boolean;
@@ -30,7 +32,8 @@ export interface MailboxView {
 /** Secrets are write-only: leave them out on an edit to keep the saved one. */
 export type MailboxInput =
   | { provider: "imap"; label: string; host: string; port: number; user: string; password?: string; smtpHost?: string; smtpPort?: number; enabled: boolean }
-  | { provider: OAuthProvider; label: string; clientId: string; clientSecret?: string; enabled: boolean };
+  | { provider: "office365"; label: string; clientId: string; clientSecret?: string; tenant?: string; enabled: boolean }
+  | { provider: "gmail"; label: string; clientId: string; clientSecret?: string; enabled: boolean };
 
 /** An unsaved IMAP login to try, or a saved mailbox of any provider. */
 export type SetupTarget = ({ provider: "imap" } & ImapDetails) | { mailboxId: string };

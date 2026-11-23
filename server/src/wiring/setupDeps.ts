@@ -1,5 +1,4 @@
 import type { ConnectDeps, MailboxClient } from "../http/routes/connect";
-import type { OAuthProviders } from "../mail/auth/providers";
 import type { SetupDeps } from "../http/routes/setup";
 import { mailboxConnection, pinnedImap, type ConnectionDeps } from "../mailboxes/connection";
 import type { MailboxService } from "../mailboxes/service";
@@ -14,12 +13,11 @@ export interface PanelMailDeps {
   tokens: Store["tokens"];
   encryptionKey: Buffer;
   publicUrl?: string;
-  providers?: OAuthProviders;
   lookup?: Lookup;
 }
 
 export function setupDeps(d: PanelMailDeps, now: () => Date = () => new Date()): SetupDeps {
-  const connection: ConnectionDeps = { tokenStore: (id) => tokenStoreAdapter(d.tokens, id), encryptionKey: d.encryptionKey, providers: d.providers, lookup: d.lookup };
+  const connection: ConnectionDeps = { tokenStore: (id) => tokenStoreAdapter(d.tokens, id), encryptionKey: d.encryptionKey, lookup: d.lookup };
   return {
     mailboxes: d.service.admin,
     oauthEnabled: d.publicUrl !== undefined,
@@ -40,12 +38,14 @@ export function connectDeps(d: PanelMailDeps): ConnectDeps | undefined {
   return {
     publicUrl: d.publicUrl,
     encryptionKey: d.encryptionKey,
-    providers: d.providers,
     client: async (mailboxId): Promise<MailboxClient | undefined> => {
       const m = await d.service.opened(mailboxId);
       const r = m?.record;
       if (!r || r.provider === "imap" || !r.oauthClientId || !m.clientSecret) return undefined;
-      return { provider: r.provider, clientId: r.oauthClientId, clientSecret: m.clientSecret, tokenStore: tokenStoreAdapter(d.tokens, r.id) };
+      return {
+        provider: r.provider, clientId: r.oauthClientId, clientSecret: m.clientSecret, tenant: r.oauthTenant,
+        tokenStore: tokenStoreAdapter(d.tokens, r.id),
+      };
     },
   };
 }

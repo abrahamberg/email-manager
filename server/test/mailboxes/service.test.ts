@@ -41,6 +41,16 @@ describe("mailbox service", () => {
     expect((await svc.enabled()).map((m) => m.record.id)).not.toContain(id);
   });
 
+  it("saves an Office 365 tenant and clears it when left out", async () => {
+    const { svc } = service();
+    const o365 = { provider: "office365", label: "W", clientId: "cid", clientSecret: SECRET, enabled: true } as const;
+    const created = await svc.admin.create({ ...o365, tenant: "contoso.onmicrosoft.com" });
+    const id = created.ok ? created.mailbox.id : "";
+    expect((await svc.opened(id))?.record.oauthTenant).toBe("contoso.onmicrosoft.com");
+    await svc.admin.update(id, { ...o365, clientSecret: undefined });
+    expect((await svc.opened(id))?.record.oauthTenant).toBeUndefined();
+  });
+
   it("says whether an OAuth mailbox has a grant, and removes the grant and cursor with the mailbox", async () => {
     const { svc, store } = service();
     const created = await svc.admin.create({ provider: "office365", label: "W", clientId: "cid", clientSecret: SECRET, enabled: true });

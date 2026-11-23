@@ -15,6 +15,7 @@ function toView(input: MailboxInput, id: string, before?: MailboxView): MailboxV
   }
   return {
     ...base, provider: input.provider, oauthClientId: input.clientId, hasPassword: false,
+    oauthTenant: input.provider === "office365" ? input.tenant : undefined,
     hasClientSecret: Boolean(input.clientSecret) || Boolean(before?.hasClientSecret),
   };
 }

@@ -246,7 +246,6 @@ Port 8081 is the internal run trigger (`POST /internal/runs` with the bearer tok
 | `ALLOWED_EMAILS` | yes | | Comma-separated addresses or `@domain`. |
 | `OPENAI_API_KEY` | no | | Secret. Without it, no AI steps. |
 | `PUBLIC_URL` | no | | The panel's https URL. Needed for Office 365 / Gmail sign-in. |
-| `MICROSOFT_TENANT_ID` | no | `common` | Entra tenant ID or domain. Set it when the Office 365 app registration is single-tenant. |
 | `DRY_RUN` | no | `true` | `false` lets runs move, label and draft. The panel can pause, but not lift an env dry-run. |
 | `RUN_INTERVAL_MINUTES` | no | | Server runs itself on this interval (when there is no CronJob). |
 | `DATA_DIR` | no | `/data` | Instance keys. Shared by server and worker. |
@@ -265,9 +264,10 @@ with AES-256-GCM before they reach Postgres and are never shown again.
 - **IMAP/SMTP:** host, port and an app password. TLS is required.
 - **Office 365:** register an app in Microsoft Entra ID (App registrations, New registration):
   - **Supported account types:** "Accounts in this organizational directory only"
-    (single tenant) is fine; then set `MICROSOFT_TENANT_ID` to the Directory (tenant) ID
-    from the app's Overview page. With the default `common`, the registration must be
-    multi-tenant, or sign-in fails with `AADSTS50194`.
+    (single tenant) is fine; then enter the Directory (tenant) ID from the app's Overview
+    page, or the tenant's domain, in the mailbox's **Tenant** field in Set up. Each mailbox
+    has its own, so mailboxes in different tenants can live side by side. Left empty, sign-in
+    uses `common`, which needs a multi-tenant registration or fails with `AADSTS50194`.
   - **Redirect URI:** platform **Web**, `PUBLIC_URL/api/connect/office365/callback`,
     e.g. `https://email.example.com/api/connect/office365/callback`. It must match exactly.
   - **API permissions:** Microsoft Graph, delegated: `IMAP.AccessAsUser.All`, `SMTP.Send`,

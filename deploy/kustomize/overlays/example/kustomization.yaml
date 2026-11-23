@@ -13,8 +13,6 @@ configMapGenerator:
     literals:
       - ALLOWED_EMAILS=you@example.com
       - PUBLIC_URL=https://email.example.com
-      # Office 365 with a single-tenant app registration: your Entra tenant ID or domain.
-      # - MICROSOFT_TENANT_ID=00000000-0000-0000-0000-000000000000
 images:
   - name: ghcr.io/abrahamberg/email-manager
     newTag: latest # pin a sha-xxxxxxx tag

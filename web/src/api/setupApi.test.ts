@@ -78,7 +78,9 @@ describe("inputFor", () => {
   });
   it("trims and leaves a blank secret out, so the saved one stays", () => {
     expect(inputFor({ ...filled, password: "" })).toEqual({ provider: "imap", label: "Home", host: "imap.example.com", port: 993, user: "me", password: undefined, enabled: true });
-    expect(inputFor({ ...emptyForm("office365"), label: "W", clientId: " cid " })).toEqual({ provider: "office365", label: "W", clientId: "cid", clientSecret: undefined, enabled: true });
+    expect(inputFor({ ...emptyForm("office365"), label: "W", clientId: " cid " })).toEqual({ provider: "office365", label: "W", clientId: "cid", clientSecret: undefined, tenant: undefined, enabled: true });
+    expect(inputFor({ ...emptyForm("office365"), label: "W", clientId: "cid", tenant: " contoso.com " })).toMatchObject({ tenant: "contoso.com" });
+    expect(inputFor({ ...emptyForm("gmail"), label: "G", clientId: "cid", tenant: "contoso.com" })).not.toHaveProperty("tenant");
   });
   it("adds SMTP only with a host", () => {
     expect(inputFor({ ...filled, smtpHost: "smtp.example.com" })).toMatchObject({ smtpHost: "smtp.example.com", smtpPort: 587 });

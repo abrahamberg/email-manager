@@ -46,10 +46,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: PUBLIC_URL
   value: {{ . | quote }}
 {{- end }}
-{{- with .Values.microsoftTenantId }}
-- name: MICROSOFT_TENANT_ID
-  value: {{ . | quote }}
-{{- end }}
 {{- with .Values.rspamdUrl }}
 - name: RSPAMD_URL
   value: {{ . | quote }}

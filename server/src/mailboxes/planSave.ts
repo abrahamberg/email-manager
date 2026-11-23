@@ -29,7 +29,10 @@ export function planSave(id: string, input: MailboxInput, existing?: MailboxReco
   const same = existing?.hasClientSecret && existing.oauthClientId === input.clientId;
   if (!input.clientSecret && !same) return { error: "secret_required" };
   return {
-    write: { id, label: input.label, provider: input.provider, oauthClientId: input.clientId, enabled: input.enabled },
+    write: {
+      id, label: input.label, provider: input.provider, oauthClientId: input.clientId, enabled: input.enabled,
+      oauthTenant: input.provider === "office365" ? input.tenant : undefined,
+    },
     secrets: { clientSecret: input.clientSecret },
   };
 }

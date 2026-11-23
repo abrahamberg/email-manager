@@ -31,6 +31,11 @@ describe("planSave", () => {
     expect("secrets" in plan && plan.secrets).toEqual(secrets);
   });
 
+  it("keeps the tenant of an Office 365 mailbox", () => {
+    const plan = planSave("mb-3", MailboxInput.parse({ provider: "office365", label: "W", clientId: "cid", clientSecret: "s", tenant: " contoso.com " }));
+    expect("write" in plan && plan.write.oauthTenant).toBe("contoso.com");
+  });
+
   it("writes only the fields of its provider", () => {
     const plan = planSave("mb-2", { ...imap, password: "pw", smtpHost: "smtp.example.com", smtpPort: 587 });
     expect("write" in plan && plan.write).toEqual({
@@ -49,6 +54,8 @@ describe("MailboxInput", () => {
     [{ provider: "gmail", label: "x", clientId: "c", host: "imap.example.com" }],
     [{ provider: "yahoo", label: "x" }],
     [{ provider: "gmail", label: "", clientId: "c" }],
+    [{ provider: "gmail", label: "x", clientId: "c", tenant: "contoso.com" }],
+    [{ provider: "office365", label: "x", clientId: "c", tenant: "evil.example/x?y" }],
   ])("rejects %j", (body) => {
     expect(MailboxInput.safeParse(body).success).toBe(false);
   });

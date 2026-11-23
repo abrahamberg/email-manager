@@ -11,19 +11,21 @@ export interface MailboxForm {
   smtpPort: number | undefined;
   clientId: string;
   clientSecret: string;
+  tenant: string;
   enabled: boolean;
 }
 
 export const emptyForm = (provider: MailProvider = "office365"): MailboxForm => ({
   provider, label: "", host: "", port: 993, user: "", password: "", smtpHost: "", smtpPort: undefined,
-  clientId: "", clientSecret: "", enabled: true,
+  clientId: "", clientSecret: "", tenant: "", enabled: true,
 });
 
 /** Secrets start empty: the server never sends them back, and empty keeps the saved one. */
 export function formFrom(m: MailboxView): MailboxForm {
   return {
     ...emptyForm(m.provider), label: m.label, host: m.imapHost ?? "", port: m.imapPort ?? 993, user: m.imapUser ?? "",
-    smtpHost: m.smtpHost ?? "", smtpPort: m.smtpPort, clientId: m.oauthClientId ?? "", enabled: m.enabled,
+    smtpHost: m.smtpHost ?? "", smtpPort: m.smtpPort, clientId: m.oauthClientId ?? "",
+    tenant: m.oauthTenant ?? "", enabled: m.enabled,
   };
 }
 
@@ -41,7 +43,11 @@ export function inputFor(f: MailboxForm): MailboxInput | undefined {
   if (!label) return undefined;
   if (f.provider !== "imap") {
     const clientId = f.clientId.trim();
-    return clientId ? { provider: f.provider, label, clientId, clientSecret: optional(f.clientSecret), enabled: f.enabled } : undefined;
+    if (!clientId) return undefined;
+    const oauth = { label, clientId, clientSecret: optional(f.clientSecret), enabled: f.enabled };
+    return f.provider === "office365"
+      ? { provider: "office365", ...oauth, tenant: optional(f.tenant.trim()) }
+      : { provider: "gmail", ...oauth };
   }
   const host = f.host.trim();
   const user = f.user.trim();

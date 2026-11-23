@@ -1,7 +1,7 @@
 import { lazyMailbox } from "../mail/lazyMailbox";
 import { oauthAuth } from "../mail/auth/oauthAuth";
 import { passwordAuth } from "../mail/auth/passwordAuth";
-import { providers, type OAuthProviderId, type OAuthProviders } from "../mail/auth/providers";
+import { oauthProvider, type OAuthProviderId } from "../mail/auth/providers";
 import type { FetchLike } from "../mail/auth/tokenEndpoint";
 import type { TokenStore } from "../mail/auth/tokenStore";
 import { imapMailbox } from "../mail/imapMailbox";
@@ -13,7 +13,6 @@ import type { OpenedMailbox } from "./service";
 export interface ConnectionDeps {
   tokenStore: (mailboxId: string) => TokenStore;
   encryptionKey: Buffer;
-  providers?: OAuthProviders;
   lookup?: Lookup;
   fetchImpl?: FetchLike;
   open?: typeof imapMailbox;
@@ -28,11 +27,18 @@ export function mailboxConnection(m: OpenedMailbox, deps: ConnectionDeps): Mailb
     return pinnedImap({ host: imapHost, port: imapPort, user: imapUser, password: m.password }, deps.lookup, deps.open);
   }
   if (!record.oauthClientId || !m.clientSecret) return failing("is missing its OAuth client id or secret");
-  return oauthMailbox(record.provider, { clientId: record.oauthClientId, clientSecret: m.clientSecret }, record.id, deps);
+  const client = { clientId: record.oauthClientId, clientSecret: m.clientSecret, tenant: record.oauthTenant };
+  return oauthMailbox(record.provider, client, record.id, deps);
 }
 
-function oauthMailbox(id: OAuthProviderId, client: { clientId: string; clientSecret: string }, mailboxId: string, deps: ConnectionDeps) {
-  const provider = (deps.providers ?? providers)[id];
+interface OAuthClient {
+  clientId: string;
+  clientSecret: string;
+  tenant?: string;
+}
+
+function oauthMailbox(id: OAuthProviderId, client: OAuthClient, mailboxId: string, deps: ConnectionDeps) {
+  const provider = oauthProvider(id, client.tenant);
   const { host, port } = provider.imap;
   const auth = oauthAuth(provider, client.clientId, client.clientSecret, deps.tokenStore(mailboxId), deps.encryptionKey, deps.fetchImpl);
   return (deps.open ?? imapMailbox)({ host, port, secure: true, auth });

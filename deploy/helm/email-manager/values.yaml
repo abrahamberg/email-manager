@@ -9,9 +9,6 @@ imagePullSecrets: []
 allowedEmails: ""
 # The panel's public https address. Needed only for Office 365 / Gmail sign-in.
 publicUrl: ""
-# Office 365 only: your Entra tenant ID or domain when the app registration is single-tenant.
-# Empty means "common", which works only for multi-tenant registrations.
-microsoftTenantId: ""
 # Report what would happen without changing any mailbox. Set false once you trust it.
 dryRun: true
 aiDailyBudgetUsd: "0.5"

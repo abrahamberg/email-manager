@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { oauthAuth } from "../../src/mail/auth/oauthAuth.js";
-import { oauthProviders, providers } from "../../src/mail/auth/providers.js";
+import { oauthProvider } from "../../src/mail/auth/providers.js";
 import { ReconnectNeededError } from "../../src/mail/auth/tokenEndpoint.js";
 import { openGrant, sealGrant } from "../../src/mail/auth/tokenStore.js";
 import { fakeTokenEndpoint, key, memoryTokenStore } from "./fakes.js";
 
-function setup(responses: { status?: number; body: unknown }[], provider = providers.office365) {
+function setup(responses: { status?: number; body: unknown }[], provider = oauthProvider("office365")) {
   const store = memoryTokenStore();
   store.blob = sealGrant({ user: "me@corp.example", refreshToken: "rt-1" }, key);
   const endpoint = fakeTokenEndpoint(responses);
@@ -30,7 +30,7 @@ describe("oauthAuth", () => {
 
   it("refreshes at the configured Microsoft tenant", async () => {
     const tenant = "0b7c6a52-6f0e-4c39-9d0a-1f4e2b3c4d5e";
-    const { auth, endpoint } = setup([{ body: { access_token: "at-1", expires_in: 3600 } }], oauthProviders(tenant).office365);
+    const { auth, endpoint } = setup([{ body: { access_token: "at-1", expires_in: 3600 } }], oauthProvider("office365", tenant));
     await auth.credentials();
     expect(endpoint.calls[0]!.url).toBe(`https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`);
   });

@@ -56,6 +56,11 @@ export function MailboxFormView({ form, onChange, providerFixed, hasSecret }: Pr
           <>
             <Field label="Client ID">{text("clientId")}</Field>
             <Field label="Client secret">{text("clientSecret", "password")}</Field>
+            {form.provider === "office365" && (
+              <Field label="Tenant ID or domain (single-tenant apps)">
+                <input value={form.tenant} onChange={(e) => set({ tenant: e.target.value })} autoComplete="off" placeholder="common" />
+              </Field>
+            )}
           </>
         )}
       </div>

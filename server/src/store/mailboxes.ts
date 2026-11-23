@@ -14,6 +14,8 @@ export interface MailboxRecord {
   smtpHost?: string;
   smtpPort?: number;
   oauthClientId?: string;
+  /** Office 365 tenant id or domain; undefined means the common endpoint. */
+  oauthTenant?: string;
   hasClientSecret: boolean;
   hasPassword: boolean;
   enabled: boolean;
@@ -30,14 +32,14 @@ export type MailboxWrite = Omit<MailboxRecord, "hasClientSecret" | "hasPassword"
 
 interface Row {
   id: string; label: string; provider: MailProvider; imap_host: string | null; imap_port: number | null;
-  imap_user: string | null; smtp_host: string | null; smtp_port: number | null; oauth_client_id: string | null;
+  imap_user: string | null; smtp_host: string | null; smtp_port: number | null; oauth_client_id: string | null; oauth_tenant: string | null;
   oauth_client_secret_enc: string | null; imap_password_enc: string | null; enabled: boolean; created_at: unknown;
 }
 
 const toRecord = (r: Row): MailboxRecord => ({
   id: r.id, label: r.label, provider: r.provider, imapHost: orUndef(r.imap_host), imapPort: orUndef(r.imap_port),
   imapUser: orUndef(r.imap_user), smtpHost: orUndef(r.smtp_host), smtpPort: orUndef(r.smtp_port),
-  oauthClientId: orUndef(r.oauth_client_id), hasClientSecret: r.oauth_client_secret_enc !== null,
+  oauthClientId: orUndef(r.oauth_client_id), oauthTenant: orUndef(r.oauth_tenant), hasClientSecret: r.oauth_client_secret_enc !== null,
   hasPassword: r.imap_password_enc !== null, enabled: r.enabled, createdAt: iso(r.created_at),
 });
 
@@ -68,14 +70,15 @@ export function mailboxRepo(db: Db) {
     async save(m: MailboxWrite, sealed: SealedSecrets) {
       await db.query(
         `INSERT INTO mailboxes (id, label, provider, imap_host, imap_port, imap_user, smtp_host, smtp_port, oauth_client_id,
-           oauth_client_secret_enc, imap_password_enc, enabled)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           oauth_client_secret_enc, imap_password_enc, enabled, oauth_tenant)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
          ON CONFLICT (id) DO UPDATE SET label = $2, provider = $3, imap_host = $4, imap_port = $5, imap_user = $6,
            smtp_host = $7, smtp_port = $8, oauth_client_id = $9,
            oauth_client_secret_enc = COALESCE($10, mailboxes.oauth_client_secret_enc),
-           imap_password_enc = COALESCE($11, mailboxes.imap_password_enc), enabled = $12`,
+           imap_password_enc = COALESCE($11, mailboxes.imap_password_enc), enabled = $12, oauth_tenant = $13`,
         [m.id, m.label, m.provider, m.imapHost ?? null, m.imapPort ?? null, m.imapUser ?? null, m.smtpHost ?? null,
-          m.smtpPort ?? null, m.oauthClientId ?? null, sealed.clientSecret ?? null, sealed.password ?? null, m.enabled],
+          m.smtpPort ?? null, m.oauthClientId ?? null, sealed.clientSecret ?? null, sealed.password ?? null, m.enabled,
+          m.oauthTenant ?? null],
       );
     },
     async remove(id: string) {

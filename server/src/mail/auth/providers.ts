@@ -14,44 +14,46 @@ export interface OAuthProvider {
   scopeOnRefresh: boolean;
 }
 
-export type OAuthProviders = Record<OAuthProviderId, OAuthProvider>;
+/** "common" serves multi-tenant apps; a single-tenant app must sign in at its own tenant. */
+const DEFAULT_MICROSOFT_TENANT = "common";
 
-/** Why: a single-tenant Entra app must sign in at its own tenant; "common" rejects it. */
-export function oauthProviders(microsoftTenant = "common"): OAuthProviders {
-  const ms = `https://login.microsoftonline.com/${encodeURIComponent(microsoftTenant)}/oauth2/v2.0`;
+const office365 = (tenant: string): OAuthProvider => {
+  const ms = `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0`;
   return {
-    office365: {
-      id: "office365",
-      imap: { host: "outlook.office365.com", port: 993 },
-      smtp: { host: "smtp.office365.com", port: 587, secure: false },
-      authorizeUrl: `${ms}/authorize`,
-      tokenUrl: `${ms}/token`,
-      scopes: [
-        "https://outlook.office.com/IMAP.AccessAsUser.All",
-        "https://outlook.office.com/SMTP.Send",
-        "offline_access",
-        "openid",
-        "email",
-      ],
-      extraAuthorizeParams: {},
-      scopeOnRefresh: true,
-    },
-    gmail: {
-      id: "gmail",
-      imap: { host: "imap.gmail.com", port: 993 },
-      smtp: { host: "smtp.gmail.com", port: 465, secure: true },
-      authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-      tokenUrl: "https://oauth2.googleapis.com/token",
-      userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
-      scopes: ["https://mail.google.com/", "openid", "email"],
-      extraAuthorizeParams: { access_type: "offline", prompt: "consent" },
-      scopeOnRefresh: false,
-    },
+    id: "office365",
+    imap: { host: "outlook.office365.com", port: 993 },
+    smtp: { host: "smtp.office365.com", port: 587, secure: false },
+    authorizeUrl: `${ms}/authorize`,
+    tokenUrl: `${ms}/token`,
+    scopes: [
+      "https://outlook.office.com/IMAP.AccessAsUser.All",
+      "https://outlook.office.com/SMTP.Send",
+      "offline_access",
+      "openid",
+      "email",
+    ],
+    extraAuthorizeParams: {},
+    scopeOnRefresh: true,
   };
+};
+
+const gmail: OAuthProvider = {
+  id: "gmail",
+  imap: { host: "imap.gmail.com", port: 993 },
+  smtp: { host: "smtp.gmail.com", port: 465, secure: true },
+  authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenUrl: "https://oauth2.googleapis.com/token",
+  userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
+  scopes: ["https://mail.google.com/", "openid", "email"],
+  extraAuthorizeParams: { access_type: "offline", prompt: "consent" },
+  scopeOnRefresh: false,
+};
+
+/** The tenant applies to Office 365 only; each mailbox may sit in its own tenant. */
+export function oauthProvider(id: OAuthProviderId, microsoftTenant = DEFAULT_MICROSOFT_TENANT): OAuthProvider {
+  return id === "office365" ? office365(microsoftTenant) : gmail;
 }
 
-export const providers = oauthProviders();
-
 export function isProviderId(value: string): value is OAuthProviderId {
-  return Object.hasOwn(providers, value);
+  return value === "office365" || value === "gmail";
 }
