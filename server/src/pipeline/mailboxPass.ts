@@ -12,6 +12,8 @@ import { startAfter } from "./startPoint";
 /** One configured mailbox in a run. Cursor and queue are its own; nothing is shared across mailboxes. */
 export interface MailboxSource {
   id: string;
+  /** The name the user gave it in Set up, so run errors say which mailbox failed. */
+  label?: string;
   mailbox: Mailbox;
   cursor: MailboxCursor;
   /** Panel actions (undo) queued for this mailbox, carried out before new mail is read. */
@@ -53,9 +55,9 @@ function forMailbox(life: LifeRun, source: MailboxSource): LifeRun {
 async function carryOutPending(source: MailboxSource, deps: RunDeps, tally: Tally): Promise<void> {
   if (deps.dryRun || !source.pendingActions) return;
   try {
-    tally.errors.push(...(await runPendingActions(source.pendingActions, source.mailbox)).map((e) => `${source.id}: ${e}`));
+    tally.errors.push(...(await runPendingActions(source.pendingActions, source.mailbox)).map((e) => `${nameOf(source)}: ${e}`));
   } catch (err) {
-    tally.errors.push(`${source.id}: pending actions: ${errorText(err)}`);
+    tally.errors.push(`${nameOf(source)}: pending actions: ${errorText(err)}`);
   }
 }
 
@@ -67,7 +69,7 @@ async function readNewMail(source: MailboxSource, shared: PassShared, deps: RunD
     try {
       await handleMessage(raw, source, shared, deps, tally);
     } catch (err) {
-      tally.errors.push(`${source.id} uid ${raw.uid}: ${errorText(err)}`);
+      tally.errors.push(`${nameOf(source)} uid ${raw.uid}: ${errorText(err)}`);
     }
     after = Math.max(after, raw.uid);
     await source.cursor.set({ uidValidity: state.uidValidity, uidNext: after + 1 });
@@ -91,6 +93,8 @@ async function handleMessage(raw: RawMessage, source: MailboxSource, shared: Pas
 function rememberHash(email: Email, hashes: bigint[]): void {
   hashes.push(simhash(email.text));
 }
+
+export const nameOf = (source: MailboxSource): string => source.label || source.id;
 
 /** Only the error message: never the email it came from. */
 export function errorText(err: unknown): string {

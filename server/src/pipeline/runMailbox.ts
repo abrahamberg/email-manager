@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Run } from "@email-manager/shared";
 import type { Classifier, Clock, OutcomeLog, RuleSource, RunLock, SenderHistory, SpamCheck } from "../ports";
 import { prepareLife, type LifeDeps } from "./lifeDeps";
-import { errorText, mailboxPass, type MailboxSource, type PassShared, type Tally } from "./mailboxPass";
+import { errorText, mailboxPass, nameOf, type MailboxSource, type PassShared, type Tally } from "./mailboxPass";
 
 export type { MailboxSource } from "./mailboxPass";
 
@@ -76,7 +76,7 @@ async function passAll(sources: MailboxSource[], shared: PassShared, deps: RunDe
       await mailboxPass(source, shared, deps, tally);
     } catch (err) {
       failed = true;
-      tally.errors.push(`mailbox ${source.id}: ${errorText(err)}`);
+      tally.errors.push(`mailbox ${nameOf(source)}: ${errorText(err)}`);
     }
   }
   return failed;

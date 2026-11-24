@@ -22,6 +22,7 @@ export async function mailboxSources(deps: SourceDeps): Promise<MailboxSource[]>
   const enabled = await deps.service.enabled();
   return Promise.all(enabled.map(async (m) => ({
     id: m.record.id,
+    label: m.record.label,
     mailbox: mailboxConnection(m, connection),
     cursor: deps.store.cursorFor(m.record.id),
     pendingActions: deps.store.pendingActionsFor(m.record.id),

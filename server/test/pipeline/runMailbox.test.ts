@@ -116,12 +116,12 @@ describe("runMailbox over several mailboxes", () => {
     const ok = fakeMailbox({ uidValidity: 3, uidNext: 8 }, second());
     const { deps, records, runs } = runDeps({ mailbox: ok.mailbox });
     deps.mailboxes = async () => [
-      { id: "broken", mailbox: broken.mailbox, cursor: fakeCursor() },
+      { id: "mb-9", label: "Work", mailbox: broken.mailbox, cursor: fakeCursor() },
       { id: "ok", mailbox: ok.mailbox, cursor: fakeCursor() },
     ];
     const result = await runMailbox(deps);
     expect(records.map((r) => r.mailboxId)).toEqual(["ok"]);
-    expect(result).toMatchObject({ aborted: true, run: { error: "mailbox broken: login refused" } });
+    expect(result).toMatchObject({ aborted: true, run: { error: "mailbox Work: login refused" } });
     expect(broken.calls).toContain("close");
     expect(runs).toHaveLength(1);
   });
