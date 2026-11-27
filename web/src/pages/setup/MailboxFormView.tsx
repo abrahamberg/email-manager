@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { MailProvider } from "../../api/setupApi";
+import { ProviderLogo } from "../../components/ProviderLogo";
 import { CHOICES, type MailboxForm } from "./target";
 
 interface Props {
@@ -15,10 +16,10 @@ function ProviderChoice({ form, onChange }: Pick<Props, "form" | "onChange">) {
   return (
     <div className="choices">
       {CHOICES.map((c) => (
-        <label key={c.id} className="choice" data-selected={c.id === form.provider}>
+        <label key={c.id} className="choice with-logo" data-selected={c.id === form.provider}>
           <input type="radio" name="provider" checked={c.id === form.provider} onChange={() => pick(c.id)} />
+          <ProviderLogo provider={c.id} />
           <span><strong>{c.label}</strong><span className="muted small block">{c.hint}</span></span>
-          <span />
         </label>
       ))}
     </div>

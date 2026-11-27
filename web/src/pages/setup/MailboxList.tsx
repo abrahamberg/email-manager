@@ -1,5 +1,6 @@
 import { failureText, type MailboxView, type SetupStatus, type TestResult } from "../../api/setupApi";
 import { Button, Chip } from "../../components/ui";
+import { ProviderLogo } from "../../components/ProviderLogo";
 import { CHOICES } from "./target";
 
 export type Outcome = { tone: "ok" | "warn"; text: string } | undefined;
@@ -36,6 +37,7 @@ export function MailboxList({ mailboxes, status, outcomes, busy, onTest, onEdit,
       {mailboxes.map((m) => (
         <li key={m.id} className="card">
           <div className="row">
+            <ProviderLogo provider={m.provider} />
             <strong>{m.label}</strong>
             <span className="muted small">{providerLabel(m)}{m.imapUser ? ` · ${m.imapUser}` : ""}</span>
             {!m.enabled && <Chip>Not in runs</Chip>}

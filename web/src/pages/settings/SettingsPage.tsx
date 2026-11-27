@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { Settings } from "../../domain/types";
+import { ProviderLogo } from "../../components/ProviderLogo";
 import { Chip, PageHeader } from "../../components/ui";
+import { providerFromHost } from "../../domain/providers";
 import { useAppData, useStore } from "../../state/StoreProvider";
 import { RepliesSection } from "./RepliesSection";
 import "./settings.css";
@@ -65,7 +67,7 @@ function MailboxSection({ settings }: { settings: Settings }) {
   return (
     <section className="card stack">
       <div className="spread">
-        <h2>Mailbox</h2>
+        <h2 className="row"><ProviderLogo provider={providerFromHost(settings.mailbox.host)} />Mailbox</h2>
         {settings.mailbox.connected ? <Chip tone="ok">Connected</Chip> : <Chip tone="danger">Not connected</Chip>}
       </div>
       <p className="muted small">
